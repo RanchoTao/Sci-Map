@@ -74,7 +74,7 @@ function setCatalog(input, privateLoaded, fileName) {
 async function importPrivateFile(file) {
   if (!file) return false;
   if (!secureOrigin()) throw new Error('当前网页不是 HTTPS 或 localhost。拒绝读取私有文件，请通过安全的 HTTPS 网址打开网站');
-  if (!/\\.json$/i.test(file.name || '')) throw new Error('请选择生成后的 merged.json 文件，不支持 ZIP 或其他格式');
+  if (!/\.json$/i.test(file.name || '')) throw new Error('请选择生成后的 merged.json 文件，不支持 ZIP 或其他格式');
   if (!Number.isFinite(file.size) || file.size < 2 || file.size > MAX_PRIVATE_CATALOG_BYTES) throw new Error('JSON 文件大小不合法或超过 64 MiB 限制');
   const parsed = JSON.parse(await file.text());
   setCatalog(parsed,true,file.name);
