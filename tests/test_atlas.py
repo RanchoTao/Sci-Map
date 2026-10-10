@@ -11,11 +11,18 @@ from urllib.error import HTTPError
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from build_index import derive, migrate
+from build_index import derive, migrate, enrich
 from serve import make_handler
 from privacy import redact
 
 class AtlasTests(unittest.TestCase):
+    def test_semantic_review_preserves_scoped_records(self):
+        records=[{'id':i,'title':'Same question','domain':'test','verification':'SOURCE_DOCUMENTED','status':s,'kind':'problem','evidence':[{'label':i,'sha256':i}]} for i,s in [('old','INVALIDATED'),('corrected','GO')]]
+        proposal={'type':'VERSION_CORRECTION','record_ids':['old','corrected'],'action':'RETAIN_SEPARATELY'}
+        catalog=enrich({'records':records,'semantic_review':[proposal]})
+        self.assertEqual([(r['id'],r['status']) for r in catalog['records']],[('old','INVALIDATED'),('corrected','GO')])
+        self.assertIn(proposal,catalog['review_queue'])
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)

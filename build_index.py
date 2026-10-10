@@ -211,7 +211,7 @@ def enrich(catalog):
                            'action': 'REVIEW_SEPARATELY; no scientific conclusions merged'})
     catalog['nodes'] = sorted(nodes.values(), key=lambda x: x['id'])
     catalog['edges'] = edges
-    catalog['review_queue'] = review
+    catalog['review_queue'] = review + catalog.get('semantic_review', [])
     catalog['statistics'] = {'source_documents': sum(r.get('kind') == 'source-document' for r in catalog['records']),
                              'scoped_topic_records': sum(r.get('kind') != 'source-document' for r in catalog['records']),
                              'unique_explicit_topic_ids': len(set(r['topic_id'] for r in catalog['records'] if r.get('topic_id'))),
