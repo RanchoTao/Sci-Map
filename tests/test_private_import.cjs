@@ -47,6 +47,9 @@ const run=expr=>vm.runInContext(expr,context);
   assert.equal(field('private-status').dataset.mode,'private');
   assert.equal(field('clear-private').disabled,false);
   assert.deepEqual(JSON.parse(run('JSON.stringify(filterRecords().map(r=>r.id))')),['TAO-001']);
+  run("state.view='inventory'; render()");
+  assert.equal(calls.length,1); // Inventory must not leak private query or evidence to a public endpoint.
+  run("state.view='list'; render()");
   context.publicEmpty=empty;
   run('state.publicCatalog=publicEmpty; clearPrivateCatalog()');
   assert.equal(run('state.catalog.records.length'),0);
