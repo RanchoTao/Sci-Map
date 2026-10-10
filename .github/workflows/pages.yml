@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: research-atlas-pages
+  group: research-atlas-pages-v2
   cancel-in-progress: true
 
 jobs:
