@@ -13,7 +13,8 @@ const context = vm.createContext({document:{getElementById:field,querySelectorAl
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/app.js'),'utf8'),context);
 vm.runInContext(`state.catalog={records:[
 {id:'topostat-wu:H33',topic_id:'topostat-wu:H33',title:'Scoped topic',kind:'hypothesis',status:'KILL_TRIVIAL',domain:'Statistics',project:'topostat-wu',verification:'SOURCE_DOCUMENTED',result_verified:true,source_status_history:[{date:'2026-09-27',status:'HOLD'},{date:'2026-09-28',status:'KILL_TRIVIAL'}],origin_machines:['RANCHO'],date:'2026-09-28',historical_status:'KILL',evidence:[{source_path:'C:/research/decision.md',excerpt:'Jensen curvature counterexample'}]},
-{id:'history-02',title:'Historical session',question:'Could nonlinear filters identify multiscale observations?',status:'NEEDS_REVIEW',domain:'UNCLASSIFIED',project:'history',origin_machines:['RANCHO'],tags:[]}
+{id:'history-02',title:'Historical session',question:'Could nonlinear filters identify multiscale observations?',status:'NEEDS_REVIEW',domain:'UNCLASSIFIED',project:'history',origin_machines:['RANCHO'],tags:[]},
+{id:'TAO-hashed-id',source_ids:['CF-001001'],title:'Semigroup topic',historical_verdict:'RESERVE_PEER_HYPOTHESIS',historical_status_group:'GO',status:'NEEDS_REVIEW',domain:'Algebra',project:'TAO / Algebra',origin_machines:['TAO'],result_verified:false,tags:[]}
 ]}`,context);
 function results(query) {
   field('query').value=query;
@@ -25,15 +26,21 @@ assert.deepEqual(results('Jensen curvature'),['topostat-wu:H33']);
 assert.deepEqual(results('decision.md'),['topostat-wu:H33']);
 assert.deepEqual(results('2026-09-28'),['topostat-wu:H33']);
 assert.deepEqual(results('nonlinear multiscale'),['history-02']);
+assert.deepEqual(results('CF-001001'),['TAO-hashed-id']);
+assert.deepEqual(results('RESERVE_PEER_HYPOTHESIS'),['TAO-hashed-id']);
+assert.deepEqual(results('GO'),['TAO-hashed-id']);
 field('status').value='NEEDS_REVIEW';
 assert.deepEqual(results('H33'),[]);
+assert.deepEqual(results('CF-001001'),['TAO-hashed-id']);
+field('status').value='GO';
+assert.deepEqual(results('CF-001001'),[]); // Historical peer GO cannot become current GO.
 field('status').value='';
 assert.deepEqual(results('nonexistent'),[]);
 field('result_verified').value='true';
 assert.deepEqual(results(''),['topostat-wu:H33']);
 field('result_verified').value='false';
-assert.deepEqual(results(''),['history-02']);
+assert.deepEqual(results(''),['history-02','TAO-hashed-id']);
 assert.deepEqual(results('H33'),[]);
 field('result_verified').value='';
 assert.deepEqual(results('HOLD'),['topostat-wu:H33']);
-console.log('PASS: actual UI search matches IDs, questions, excerpts, paths, dates, history and result receipt filters');
+console.log('PASS: actual UI search matches source IDs and peer history without promoting peer GO; receipt filters remain scoped');
