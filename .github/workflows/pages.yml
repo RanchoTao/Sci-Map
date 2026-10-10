@@ -31,6 +31,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -v
           node tests/test_search.cjs
+          node tests/test_private_import.cjs
 
       - name: Build public-only static site
         shell: bash
@@ -63,9 +64,6 @@ jobs:
           (out / "index.html").write_text(index, encoding="utf-8")
 
           app = (src / "app.js").read_text(encoding="utf-8")
-          app = app.replace("私有课题目录 · ", "公开界面（空目录） · ")
-          app = app.replace("PRIVATE_LOCAL_DERIVED", "PUBLIC_EMPTY_CATALOG")
-          app = app.replace("research-atlas-filtered-private.json", "research-atlas-public-empty.json")
           (out / "app.js").write_text(app, encoding="utf-8")
 
           public_catalog = {
