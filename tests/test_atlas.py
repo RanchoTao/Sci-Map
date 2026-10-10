@@ -59,6 +59,11 @@ class AtlasTests(unittest.TestCase):
         self.assertTrue({'Problem','Evidence','Research Area','Hypothesis'}.issubset({n['type'] for n in result['nodes']}))
         self.assertTrue(all(e['provenance'] for e in result['edges']))
         self.assertTrue(all(n['provenance'] for n in result['nodes']))
+    def test_shared_area_unions_all_provenance(self):
+        result=derive([self.archive(),self.archive('two.zip',text='# Other research\n## Hypothesis\nChanged condition.\n')])
+        areas=[n for n in result['nodes'] if n['type']=='Research Area']
+        self.assertEqual(len(areas),1)
+        self.assertEqual(len(areas[0]['provenance']),2)
     def test_credentials_redacted_in_derived_content(self):
         token = 'sk-'+'a'*35
         record = derive([self.archive(text='# Research results\napi_key='+token+'\n')])['records'][0]

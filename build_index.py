@@ -168,7 +168,14 @@ def enrich(catalog):
     grouped = defaultdict(list)
     def add(kind, key, label, provenance, **extra):
         node_id = kind.lower() + '-' + digest(key.encode())[:24]
-        nodes[node_id] = dict(id=node_id, type=kind, label=label, provenance=provenance, **extra)
+        if node_id in nodes:
+            known = {json.dumps(p, sort_keys=True, ensure_ascii=False) for p in nodes[node_id]['provenance']}
+            for p in provenance:
+                if json.dumps(p, sort_keys=True, ensure_ascii=False) not in known:
+                    nodes[node_id]['provenance'].append(p)
+                    known.add(json.dumps(p, sort_keys=True, ensure_ascii=False))
+        else:
+            nodes[node_id] = dict(id=node_id, type=kind, label=label, provenance=list(provenance), **extra)
         return node_id
     for r in catalog['records']:
         grouped[normalize_title(r['title'])].append(r)
@@ -176,7 +183,7 @@ def enrich(catalog):
         area = add('Research Area', r['domain'], r['domain'], evs, verification='CLASSIFICATION_REQUIRES_REVIEW')
         problem = add('Problem', r['id'], r['title'], evs, record_id=r['id'], verification=r['verification'])
         edges.append({'source': area, 'target': problem, 'type': 'contains', 'provenance': evs})
-        for kind, value in [('Hypothesis', r.get('hypothesis')), ('Experiment', r.get('experiment')), ('Verdict', r.get('status') if r['verification'] in ('SOURCE_DOCUMENTED', 'REVIEWED') else None), ('Follow-up', r.get('follow_up', r.get('next_step')))]:
+        for kind, value in [('Hypothesis', r.get('hypothesis')), ('Experiment', r.get('experiment')), ('Verdict', r.get('status') if r['verification'].startswith('SOURCE_DOCUMENTED') or r['verification'] == 'REVIEWED' else None), ('Follow-up', r.get('follow_up', r.get('next_step')))]:
             if value:
                 label = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 child = add(kind, r['id'] + ':' + kind, label[:500], evs, record_id=r['id'], verification=r['verification'], scope=r.get('scope'))
@@ -207,8 +214,13 @@ def enrich(catalog):
     catalog['review_queue'] = review
     catalog['statistics'] = {'source_documents': sum(r.get('kind') == 'source-document' for r in catalog['records']),
                              'scoped_topic_records': sum(r.get('kind') != 'source-document' for r in catalog['records']),
+                             'unique_explicit_topic_ids': len(set(r['topic_id'] for r in catalog['records'] if r.get('topic_id'))),
+                             'source_documented_records': sum(r.get('verification', '').startswith('SOURCE_DOCUMENTED') for r in catalog['records']),
+                             'independently_reproduced_results': sum(r.get('verification') == 'INDEPENDENTLY_REPRODUCED' for r in catalog['records']),
                              'reviewed_topics': sum(r.get('kind') != 'source-document' and r.get('verification') in ('SOURCE_DOCUMENTED', 'REVIEWED') for r in catalog['records']),
                              'by_status': dict(sorted((s, sum(r['status'] == s for r in catalog['records'])) for s in set(r['status'] for r in catalog['records'])))}
+    for field in ('kind', 'result_kind', 'verification'):
+        catalog['statistics']['by_' + field] = dict(sorted((v, sum(r.get(field, 'UNSPECIFIED') == v for r in catalog['records'])) for v in set(r.get(field, 'UNSPECIFIED') for r in catalog['records'])))
     return catalog
 
 if __name__ == '__main__':

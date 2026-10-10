@@ -17,13 +17,11 @@ Python 3.10+; no third-party packages or remote scripts required.
 
 ```powershell
 python -m unittest discover -s tests -v
-python build_index.py --archive /private/RANCHO-part0001.zip --archive /private/TAO-part0001.zip --manifest /private/RANCHO_ARCHIVE_MANIFEST.jsonl --seed /private/derived-reviewed.json --output web/data/merged.json
-python serve.py --site web --evidence-dir /private/evidence --manifest /private/RANCHO_ARCHIVE_MANIFEST.jsonl --manifest /private/TAO_ARCHIVE_MANIFEST.jsonl --port 8765
+python pipeline.py --review-catalog /private/review/derived-reviewed.json --site web
+python serve.py --site web --port 8765
 ```
 
-Open http://127.0.0.1:8765. `--seed` is optional and explicit; no public demo records enter the real catalog. Copy `data/catalog.json` to `web/data/merged.json` for an empty UI.
-
-The local server exposes only five static file routes and two bounded APIs. Optional raw evidence preview requires explicit `--enable-raw-preview`, an exact catalog record, archive name, manifest member and matching SHA-256. No generic directory listing, ZIP download or arbitrary local file route is provided. Sensitive filenames and Git internals cannot be previewed; derived text and previews redact common credential patterns. Original private ZIP content remains unchanged.
+Open http://127.0.0.1:8765. No public demo records enter the real catalog. Copy `data/catalog.json` to `web/data/merged.json` for an empty UI. The server accepts only five static file routes, with no directory listing or archive download. Raw previews remain disabled unless explicitly enabled for a separately authorized use.
 
 ## Model and review boundaries
 
