@@ -216,6 +216,7 @@ def enrich(catalog):
                              'scoped_topic_records': sum(r.get('kind') != 'source-document' for r in catalog['records']),
                              'unique_explicit_topic_ids': len(set(r['topic_id'] for r in catalog['records'] if r.get('topic_id'))),
                              'source_documented_records': sum(r.get('verification', '').startswith('SOURCE_DOCUMENTED') for r in catalog['records']),
+                             'historical_result_receipts_checked': sum(r.get('result_verified') is True for r in catalog['records']),
                              'independently_reproduced_results': sum(r.get('verification') == 'INDEPENDENTLY_REPRODUCED' for r in catalog['records']),
                              'reviewed_topics': sum(r.get('kind') != 'source-document' and r.get('verification') in ('SOURCE_DOCUMENTED', 'REVIEWED') for r in catalog['records']),
                              'by_status': dict(sorted((s, sum(r['status'] == s for r in catalog['records'])) for s in set(r['status'] for r in catalog['records'])))}

@@ -12,7 +12,7 @@ const context = vm.createContext({document:{getElementById:field,querySelectorAl
   fetch: async()=>({ok:false})});
 vm.runInContext(fs.readFileSync(path.join(__dirname,'../web/app.js'),'utf8'),context);
 vm.runInContext(`state.catalog={records:[
-{id:'topostat-wu:H33',topic_id:'topostat-wu:H33',title:'Scoped topic',kind:'hypothesis',status:'KILL_TRIVIAL',domain:'Statistics',project:'topostat-wu',verification:'SOURCE_DOCUMENTED',origin_machines:['RANCHO'],date:'2026-09-28',historical_status:'KILL',evidence:[{source_path:'C:/research/decision.md',excerpt:'Jensen curvature counterexample'}]},
+{id:'topostat-wu:H33',topic_id:'topostat-wu:H33',title:'Scoped topic',kind:'hypothesis',status:'KILL_TRIVIAL',domain:'Statistics',project:'topostat-wu',verification:'SOURCE_DOCUMENTED',result_verified:true,source_status_history:[{date:'2026-09-27',status:'HOLD'},{date:'2026-09-28',status:'KILL_TRIVIAL'}],origin_machines:['RANCHO'],date:'2026-09-28',historical_status:'KILL',evidence:[{source_path:'C:/research/decision.md',excerpt:'Jensen curvature counterexample'}]},
 {id:'history-02',title:'Historical session',question:'Could nonlinear filters identify multiscale observations?',status:'NEEDS_REVIEW',domain:'UNCLASSIFIED',project:'history',origin_machines:['RANCHO'],tags:[]}
 ]}`,context);
 function results(query) {
@@ -29,4 +29,11 @@ field('status').value='NEEDS_REVIEW';
 assert.deepEqual(results('H33'),[]);
 field('status').value='';
 assert.deepEqual(results('nonexistent'),[]);
-console.log('PASS: actual UI search matches topic IDs, questions, excerpts, paths, dates and filters');
+field('result_verified').value='true';
+assert.deepEqual(results(''),['topostat-wu:H33']);
+field('result_verified').value='false';
+assert.deepEqual(results(''),['history-02']);
+assert.deepEqual(results('H33'),[]);
+field('result_verified').value='';
+assert.deepEqual(results('HOLD'),['topostat-wu:H33']);
+console.log('PASS: actual UI search matches IDs, questions, excerpts, paths, dates, history and result receipt filters');
