@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+data/merged.json
+data/private*
+*.zip
+*.bundle
+*.jsonl
+reports/
+evidence/
+

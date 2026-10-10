@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Research Atlas provenance catalog v0.2",
+  "type": "object",
+  "required": ["schema_version", "records", "nodes", "edges"],
+  "properties": {
+    "schema_version": {"const": "atlas-catalog-v0.2"},
+    "records": {"type": "array", "items": {"type": "object", "required": ["id", "title", "status", "scope", "verification", "evidence"], "properties": {
+      "id": {"type": "string"}, "title": {"type": "string"},
+      "status": {"type": "string"}, "scope": {"type": "string"},
+      "verification": {"type": "string"}, "date_provenance": {"type": "string"},
+      "evidence": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
+    }}},
+    "nodes": {"type": "array", "items": {"type": "object", "required": ["id", "type", "label", "provenance"], "properties": {
+      "type": {"enum": ["Research Area", "Problem", "Hypothesis", "Experiment", "Evidence", "Verdict", "Follow-up"]},
+      "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
+    }}},
+    "edges": {"type": "array", "items": {"type": "object", "required": ["source", "target", "type", "provenance"], "properties": {
+      "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
+    }}}
+  },
+  "$defs": {"provenance": {"type": "object", "required": ["label"], "properties": {
+    "label": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "machine": {"type": "string"}, "path": {"type": "string"}, "excerpt": {"type": "string"},
+    "line_start": {"type": "integer", "minimum": 1}, "line_end": {"type": "integer", "minimum": 1}
+  }}}
+}
