@@ -1,0 +1,119 @@
+name: Deploy public Research Atlas to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "tests/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: research-atlas-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout public software repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Verify source tests
+        run: |
+          python -m unittest discover -s tests -v
+          node tests/test_search.cjs
+
+      - name: Build public-only static site
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import json
+
+          src = Path("web")
+          out = Path("_site")
+          (out / "data").mkdir(parents=True, exist_ok=True)
+
+          # Explicit allowlist. Never copy a local merged.json, private archive, or manifest.
+          for name in ("style.css",):
+              (out / name).write_bytes((src / name).read_bytes())
+
+          index = (src / "index.html").read_text(encoding="utf-8")
+          index = index.replace("Research Atlas · 私有科研地图", "Research Atlas · 公开入口")
+          index = index.replace("PRIVATE · LOCAL", "PUBLIC · EMPTY CATALOG")
+          index = index.replace(
+              "轻量目录保留课题与结果、依据摘录及来源哈希。原始流程和实验数据不迁移。来源记载与独立复现分开标注。",
+              "本页仅提供公开软件界面，不包含私有研究题目、实验记录或未发表结论。"
+          )
+          index = index.replace(
+              "检索问题、假设、失败条件与结果依据。来源记载不等同独立复现。",
+              "公开界面当前不含研究数据。私有科研目录只在已授权的环境中访问。"
+          )
+          index = index.replace("来源清单</button>", "来源清单（需本地服务）</button>")
+          (out / "index.html").write_text(index, encoding="utf-8")
+
+          app = (src / "app.js").read_text(encoding="utf-8")
+          app = app.replace("私有课题目录 · ", "公开界面（空目录） · ")
+          app = app.replace("PRIVATE_LOCAL_DERIVED", "PUBLIC_EMPTY_CATALOG")
+          app = app.replace("research-atlas-filtered-private.json", "research-atlas-public-empty.json")
+          (out / "app.js").write_text(app, encoding="utf-8")
+
+          public_catalog = {
+              "schema_version": "atlas-catalog-v0.2",
+              "project": "Research Atlas public interface",
+              "data_policy": "PUBLIC_SOFTWARE_ONLY_NO_PRIVATE_RECORDS",
+              "archive_scope": "PUBLIC_EMPTY_CATALOG",
+              "generated_utc": datetime.now(timezone.utc).isoformat(),
+              "records": [], "nodes": [], "edges": [],
+              "review_queue": [], "source_archives": {},
+              "statistics": {
+                  "scoped_topic_records": 0,
+                  "source_documented_records": 0,
+                  "independently_reproduced_results": 0
+              },
+              "index_errors": []
+          }
+          (out / "data" / "merged.json").write_text(
+              json.dumps(public_catalog, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          (out / ".nojekyll").write_text("", encoding="utf-8")
+          assert public_catalog["records"] == []
+          assert set(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()) == {
+              "index.html", "app.js", "style.css", "data/merged.json", ".nojekyll"
+          }
+          print("Public-only Pages artifact prepared; private records = 0")
+          PY
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload public static artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
