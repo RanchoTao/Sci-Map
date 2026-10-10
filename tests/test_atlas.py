@@ -16,6 +16,13 @@ from serve import make_handler
 from privacy import redact
 
 class AtlasTests(unittest.TestCase):
+    def test_compact_review_vocabulary_retains_historical_verdicts(self):
+        records=[{'id':str(i),'title':'Scoped question','domain':'test','verification':v,'status':'KILL','kind':'problem','evidence':[{'label':'receipt','sha256':'test'}]} for i,v in enumerate(['SOURCE_DOCUMENT_REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED','UNREVIEWED'])]
+        catalog=enrich({'records':records})
+        self.assertEqual(catalog['statistics']['source_documented_records'],3)
+        self.assertEqual(sum(n['type']=='Verdict' for n in catalog['nodes']),3)
+        self.assertEqual(catalog['statistics']['independently_reproduced_results'],0)
+
     def test_semantic_review_preserves_scoped_records(self):
         records=[{'id':i,'title':'Same question','domain':'test','verification':'SOURCE_DOCUMENTED','status':s,'kind':'problem','evidence':[{'label':i,'sha256':i}]} for i,s in [('old','INVALIDATED'),('corrected','GO')]]
         proposal={'type':'VERSION_CORRECTION','record_ids':['old','corrected'],'action':'RETAIN_SEPARATELY'}

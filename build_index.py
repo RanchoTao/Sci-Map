@@ -54,6 +54,11 @@ def load_manifest(z):
 def normalize_title(title):
     return re.sub(r'[^\w\u4e00-\u9fff]+', ' ', title.lower()).strip()
 
+def source_reviewed(record):
+    """A checked source or receipt is separate from scientific reproduction."""
+    value=record.get('verification','')
+    return value.startswith(('SOURCE_DOCUMENTED','SOURCE_DOCUMENT_REVIEWED')) or value in ('REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED')
+
 def derive(archives, seed=None, max_text_bytes=2_000_000, manifests=(), topic_only=False):
     catalog = migrate(json.loads(Path(seed).read_text(encoding='utf-8-sig')) if seed else {'records': []})
     by_id = {r['id']: r for r in catalog['records']}
@@ -183,7 +188,7 @@ def enrich(catalog):
         area = add('Research Area', r['domain'], r['domain'], evs, verification='CLASSIFICATION_REQUIRES_REVIEW')
         problem = add('Problem', r['id'], r['title'], evs, record_id=r['id'], verification=r['verification'])
         edges.append({'source': area, 'target': problem, 'type': 'contains', 'provenance': evs})
-        for kind, value in [('Hypothesis', r.get('hypothesis')), ('Experiment', r.get('experiment')), ('Verdict', r.get('status') if r['verification'].startswith('SOURCE_DOCUMENTED') or r['verification'] == 'REVIEWED' else None), ('Follow-up', r.get('follow_up', r.get('next_step')))]:
+        for kind, value in [('Hypothesis', r.get('hypothesis')), ('Experiment', r.get('experiment')), ('Verdict', r.get('status') if source_reviewed(r) else None), ('Follow-up', r.get('follow_up', r.get('next_step')))]:
             if value:
                 label = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 child = add(kind, r['id'] + ':' + kind, label[:500], evs, record_id=r['id'], verification=r['verification'], scope=r.get('scope'))
@@ -215,10 +220,10 @@ def enrich(catalog):
     catalog['statistics'] = {'source_documents': sum(r.get('kind') == 'source-document' for r in catalog['records']),
                              'scoped_topic_records': sum(r.get('kind') != 'source-document' for r in catalog['records']),
                              'unique_explicit_topic_ids': len(set(r['topic_id'] for r in catalog['records'] if r.get('topic_id'))),
-                             'source_documented_records': sum(r.get('verification', '').startswith('SOURCE_DOCUMENTED') for r in catalog['records']),
+                             'source_documented_records': sum(source_reviewed(r) for r in catalog['records']),
                              'historical_result_receipts_checked': sum(r.get('result_verified') is True for r in catalog['records']),
                              'independently_reproduced_results': sum(r.get('verification') == 'INDEPENDENTLY_REPRODUCED' for r in catalog['records']),
-                             'reviewed_topics': sum(r.get('kind') != 'source-document' and r.get('verification') in ('SOURCE_DOCUMENTED', 'REVIEWED') for r in catalog['records']),
+                             'reviewed_topics': sum(r.get('kind') != 'source-document' and source_reviewed(r) for r in catalog['records']),
                              'by_status': dict(sorted((s, sum(r['status'] == s for r in catalog['records'])) for s in set(r['status'] for r in catalog['records'])))}
     for field in ('kind', 'result_kind', 'verification'):
         catalog['statistics']['by_' + field] = dict(sorted((v, sum(r.get(field, 'UNSPECIFIED') == v for r in catalog['records'])) for v in set(r.get(field, 'UNSPECIFIED') for r in catalog['records'])))
