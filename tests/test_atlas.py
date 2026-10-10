@@ -16,6 +16,15 @@ from serve import make_handler
 from privacy import redact
 
 class AtlasTests(unittest.TestCase):
+    def test_graph_provenance_references_do_not_duplicate_excerpt(self):
+        ev={'label':'source:7','sha256':'abc','source_path':'private/topic.md','line_start':7,'excerpt':'Scoped historical result'}
+        catalog=enrich({'records':[{'id':'topic','title':'Question','domain':'test','verification':'SOURCE_DOCUMENT_REVIEWED','status':'KILL','kind':'problem','evidence':[ev]}]})
+        self.assertEqual(catalog['records'][0]['evidence'][0]['excerpt'],'Scoped historical result')
+        for n in catalog['nodes']:
+            self.assertEqual(n['provenance'][0]['sha256'],'abc')
+            self.assertEqual(n['provenance'][0]['line_start'],7)
+            self.assertNotIn('excerpt',n['provenance'][0])
+
     def test_compact_review_vocabulary_retains_historical_verdicts(self):
         records=[{'id':str(i),'title':'Scoped question','domain':'test','verification':v,'status':'KILL','kind':'problem','evidence':[{'label':'receipt','sha256':'test'}]} for i,v in enumerate(['SOURCE_DOCUMENT_REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED','UNREVIEWED'])]
         catalog=enrich({'records':records})

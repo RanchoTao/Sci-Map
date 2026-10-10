@@ -57,7 +57,7 @@ def normalize_title(title):
 def source_reviewed(record):
     """A checked source or receipt is separate from scientific reproduction."""
     value=record.get('verification','')
-    return value.startswith(('SOURCE_DOCUMENTED','SOURCE_DOCUMENT_REVIEWED')) or value in ('REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED')
+    return value.startswith(('SOURCE_DOCUMENTED','SOURCE_DOCUMENT_REVIEWED')) or value in ('REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED','TAO_SOURCE_ARITHMETIC_CHECKED_PEER_RECEIPT')
 
 def derive(archives, seed=None, max_text_bytes=2_000_000, manifests=(), topic_only=False):
     catalog = migrate(json.loads(Path(seed).read_text(encoding='utf-8-sig')) if seed else {'records': []})
@@ -171,20 +171,25 @@ def derive(archives, seed=None, max_text_bytes=2_000_000, manifests=(), topic_on
 def enrich(catalog):
     nodes, edges, review = {}, [], []
     grouped = defaultdict(list)
+    provenance_keys = defaultdict(set)
     def add(kind, key, label, provenance, **extra):
         node_id = kind.lower() + '-' + digest(key.encode())[:24]
         if node_id in nodes:
-            known = {json.dumps(p, sort_keys=True, ensure_ascii=False) for p in nodes[node_id]['provenance']}
+            known = provenance_keys[node_id]
             for p in provenance:
-                if json.dumps(p, sort_keys=True, ensure_ascii=False) not in known:
+                serialized = json.dumps(p, sort_keys=True, ensure_ascii=False)
+                if serialized not in known:
                     nodes[node_id]['provenance'].append(p)
-                    known.add(json.dumps(p, sort_keys=True, ensure_ascii=False))
+                    known.add(serialized)
         else:
             nodes[node_id] = dict(id=node_id, type=kind, label=label, provenance=list(provenance), **extra)
+            provenance_keys[node_id].update(json.dumps(p, sort_keys=True, ensure_ascii=False) for p in provenance)
         return node_id
     for r in catalog['records']:
         grouped[normalize_title(r['title'])].append(r)
-        evs = r.get('evidence', [])
+        # The record preserves the excerpt once; graph references retain exact
+        # origin/hash/line pointers without repeating prose across every edge.
+        evs = [{k:v for k,v in ev.items() if k in ('label','sha256','source_path','path','machine','line_start','line_end','archive','member','source_origin')} for ev in r.get('evidence', [])]
         area = add('Research Area', r['domain'], r['domain'], evs, verification='CLASSIFICATION_REQUIRES_REVIEW')
         problem = add('Problem', r['id'], r['title'], evs, record_id=r['id'], verification=r['verification'])
         edges.append({'source': area, 'target': problem, 'type': 'contains', 'provenance': evs})
