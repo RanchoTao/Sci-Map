@@ -1,0 +1,12 @@
+**/.git/**
+**/.vercel/**
+**/.env*
+**/.state/**
+**/node_modules/**
+cloud/dist/**
+web/data/**
+_site/**
+outputs/**
+work/**
+client-test/**
+v03-*.json
