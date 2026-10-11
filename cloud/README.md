@@ -89,3 +89,5 @@ node tests/test_private_import.cjs
 服务端分页上限 40、图谱上限 80 节点、时间线响应上限 200 事件；客户端不加载完整 JSON。现阶段接受不超过 100 MB 的单个 Git blob、100,000 条来源记录，并验证十万条通用记录的索引和分页。搜索索引当前保存在函数内存中；达到文件/内存阈值前，需要将来源目录分片或导入专用全文搜索存储。这些阈值是明确的迁移边界，不代表已对十万条完整科研正文完成负载验收。
 
 Private Blob 的成功同步回执、快照绑定和审核意见分别追加保存。独立源码分支不会自动发布生产应用；现有 Pages 工作流不变。Preview 可能另受 Vercel Deployment Protection 保护，这层保护不等于应用内 GitHub 登录验收。
+
+此隔离项目的 Ignored Build Step 设置为 `node scripts/ignore-production.mjs`，跳过自动 Production Git 构建，仅接受 Preview 自动构建。真实认证验收后，以受审核的手动发布流程生成并验证生产部署；不要直接解除这个门禁来替代验收。

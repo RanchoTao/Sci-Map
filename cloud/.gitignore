@@ -4,6 +4,3 @@ dist/
 .env*
 !.env.example
 .state/
-
-.vercel
-.env*
