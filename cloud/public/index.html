@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Research Atlas · 私有研究地图</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <aside>
+      <div class="brand">
+        ◈ <strong>RESEARCH ATLAS</strong
+        ><span>RANCHO · PRIVATE CLOUD · v0.3</span>
+      </div>
+      <nav aria-label="研究地图视图">
+        <button class="active" data-view="list">研究记录</button
+        ><button data-view="graph">来源关系图</button
+        ><button data-view="timeline">研究时间线</button
+        ><button data-view="machines">跨机器对照</button
+        ><button data-view="reviews">重复与冲突审核</button>
+      </nav>
+      <p class="policy">
+        仅归档课题与结果依据。<br />保留历史失败、适用条件及来源。<br />来源记载与独立科学复现分开标注。
+      </p>
+    </aside>
+    <main>
+      <header>
+        <div class="eyebrow">EVIDENCE BEFORE VERDICT</div>
+        <div class="header-row">
+          <h1>每一条探索，都有出处。</h1>
+          <div class="account">
+            <span id="user-name"></span
+            ><button id="logout" class="hidden">退出</button>
+          </div>
+        </div>
+        <p>登录后检索私有研究目录，追溯判断、失败条件与证据。</p>
+        <div id="connection" role="status" aria-live="polite">
+          正在检查登录状态…
+        </div>
+      </header>
+      <section id="auth-panel" class="auth-panel hidden">
+        <h2 id="auth-title">登录私有研究地图</h2>
+        <p id="auth-message">通过已授权的 GitHub 账号读取私有课题目录。</p>
+        <a class="button-link" href="/api/auth/login" id="login-link"
+          >使用 GitHub 登录</a
+        ><button id="retry">重试连接</button>
+      </section>
+      <div id="workspace" class="hidden">
+        <section id="metrics" class="metrics" aria-label="归档概况"></section>
+        <section id="sync-banner" class="banner" role="status"></section>
+        <section class="filters">
+          <label class="search"
+            >检索问题、编号、判断与依据<input
+              id="query"
+              type="search"
+              placeholder="H33 / CF-001001 / 研究问题 / 失败条件" /></label
+          ><label
+            >来源机器<select id="machine">
+              <option value="">全部机器</option>
+              <option value="RANCHO">RANCHO</option>
+              <option value="TAO">TAO</option>
+            </select></label
+          ><label
+            >当前记录状态<select id="status">
+              <option value="">全部状态</option>
+            </select></label
+          ><label
+            >领域<select id="domain">
+              <option value="">全部领域</option>
+            </select></label
+          ><label
+            >标签<select id="tag">
+              <option value="">全部标签</option>
+            </select></label
+          ><label class="checkbox"
+            ><input id="failure" type="checkbox" />失败 / 终止路线</label
+          >
+        </section>
+        <div class="view-head">
+          <h2 id="view-title">研究记录</h2>
+          <span id="result-count"></span><button id="refresh">更新目录</button>
+        </div>
+        <div id="notice" class="notice hidden" role="alert"></div>
+        <section id="results" aria-live="polite"></section>
+        <div id="pagination" class="pagination">
+          <button id="prev">上一页</button><span id="page-number"></span
+          ><button id="next">下一页</button>
+        </div>
+      </div>
+      <footer>
+        原始历史判断不会因关键词而升级为成功。未核对记录不表示科学失败；局部失败不代表全局不可能。
+      </footer>
+    </main>
+    <dialog id="details">
+      <button id="close-detail" class="close" aria-label="关闭详情">×</button>
+      <div id="detail-body"></div>
+    </dialog>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
