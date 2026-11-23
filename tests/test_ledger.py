@@ -154,3 +154,41 @@ class NegativeKnowledgeImport(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ProblemTreeImport(unittest.TestCase):
+    TREE = {'version': '0.1', 'as_of': '2026-11-21', 'scope': 'test', 'nodes': [
+        {'id': 'T', 'name': 'Topic', 'level': 'topic', 'parent': None, 'branch': 'A', 'member_ids': [1, 2],
+         'venue_stats': {'ICLR': {'2025': {'observed_submissions': 1, 'observed_acceptances': 3}}}},
+        {'id': 'A0', 'name': 'Area', 'level': 'area', 'parent': 'T', 'branch': 'A',
+         'our_attempts': [{'project': 'P', 'verdict': 'KILL', 'scope': 'one round', 'path': 'D:\\\\secret\\\\x.md', 'sha256': 'a' * 64}]},
+        {'id': 'q1', 'name': 'Q1', 'level': 'problem', 'parent': 'A0', 'branch': 'A', 'open_problems': [{
+            'statement': 'Does X hold?', 'quote': 'Whether X holds remains an open question.', 'status': 'open',
+            'follow_up': {'screen_outcome': '有相近后续文献', 'shortlist': [{'title': 'Unrelated', 'similarity': 0.0}]}}]},
+    ]}
+
+    def test_public_tree_drops_private_paths_and_attempts(self):
+        import import_tree
+        out = import_tree.convert(self.TREE)
+        self.assertNotIn('secret', json.dumps(out))
+        self.assertEqual(out['visibility'], 'public')
+        area = next(n for n in out['nodes'] if n['id'] == 'A0')
+        self.assertEqual(area['attempts'], [])
+
+    def test_private_tree_keeps_attempts_and_flags(self):
+        import import_tree
+        out = import_tree.convert(self.TREE, private=True)
+        area = next(n for n in out['nodes'] if n['id'] == 'A0')
+        self.assertEqual(area['attempts'][0]['verdict'], 'KILL')
+        q = next(n for n in out['nodes'] if n['id'] == 'q1')
+        self.assertEqual(q['problem']['strength'], 'explicit_open_problem')
+        self.assertIn('weak_followup_match', [f['code'] for f in q['flags']])
+        topic = next(n for n in out['nodes'] if n['id'] == 'T')
+        self.assertIn('mixed_denominator', [f['code'] for f in topic['flags']])
+
+    def test_public_build_refuses_private_tree(self):
+        import import_tree
+        with self.assertRaises(SystemExit):
+            ledger.build([EXAMPLE], private=False, tree=import_tree.convert(self.TREE, private=True))
+        cat = ledger.build([EXAMPLE], private=True, tree=import_tree.convert(self.TREE, private=True))
+        self.assertEqual(len(cat['tree']['nodes']), 3)

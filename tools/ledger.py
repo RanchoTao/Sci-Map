@@ -37,7 +37,7 @@ RELATIONS = {'refines', 'contradicts', 'supersedes', 'depends_on', 'duplicates',
 OPS = {'<', '<=', '>', '>=', '==', '~='}
 FIELDS = {'schema', 'id', 'title', 'domain', 'project', 'question', 'hypothesis', 'setup', 'outcome',
           'metrics', 'verdict', 'scope', 'cause', 'evidence_level', 'contributor', 'date', 'evidence',
-          'repro', 'reproductions', 'related', 'follow_up', 'tags', 'license'}
+          'repro', 'reproductions', 'related', 'follow_up', 'tags', 'license', 'addresses'}
 REQUIRED = ['schema', 'id', 'title', 'domain', 'hypothesis', 'verdict', 'scope', 'evidence_level',
             'contributor', 'date', 'evidence']
 ID_RE = re.compile(r'^[a-z0-9][a-z0-9-]{2,80}$')
@@ -174,6 +174,8 @@ def check_record(r, path=None):
             e.append(f'related[{i}] needs type in {sorted(RELATIONS)} and target id')
     if 'tags' in r and (not isinstance(r['tags'], list) or len(set(map(str, r['tags']))) != len(r['tags'])):
         e.append('tags must be a list of unique strings')
+    if 'addresses' in r and (not isinstance(r['addresses'], list) or not all(isinstance(x, str) and x for x in r['addresses'])):
+        e.append('addresses must be a list of problem-tree node ids')
     if 'metrics' in r and not isinstance(r['metrics'], dict):
         e.append('metrics must be an object')
     return e
@@ -264,10 +266,11 @@ def to_atlas(r, source):
         'reproductions': r.get('reproductions', []), 'repro': r.get('repro'),
         'relations': [{'type': x['type'], 'target': x['target']} for x in r.get('related', [])],
         'evidence': evidence, 'ledger_path': source, 'license': r.get('license', 'CC-BY-4.0'),
+        'addresses': r.get('addresses', []),
     }
 
 
-def build(ledgers, private=False):
+def build(ledgers, private=False, tree=None):
     errors, warnings, records = validate(ledgers)
     if errors:
         raise SystemExit('ledger has errors; run `python tools/ledger.py validate`:\n  ' + '\n  '.join(errors))
@@ -288,6 +291,16 @@ def build(ledgers, private=False):
     for item in catalog['semantic_review']:
         item['record_ids'] = list(item['record_ids'])
     catalog = enrich(catalog)
+    if tree is not None:
+        if tree.get('schema') != 'scimap-tree-v1':
+            raise SystemExit('tree must be produced by tools/import_tree.py (schema scimap-tree-v1)')
+        if tree.get('visibility') == 'private' and not private:
+            raise SystemExit('refusing to put a private tree into a public catalog; rebuild the tree without --private')
+        ids = {n['id'] for n in tree['nodes']}
+        missing = sorted({a for r in catalog['records'] for a in r.get('addresses', []) if a not in ids})
+        if missing:
+            raise SystemExit(f'records address unknown tree nodes: {missing}')
+        catalog['tree'] = tree
     catalog['statistics']['failure_records'] = sum(r['status'] not in ('SUPPORTED', 'OPEN') for r in catalog['records'])
     return catalog
 
@@ -389,6 +402,7 @@ def main(argv=None):
     b = sub.add_parser('build', help='Compile ledger(s) into the web catalog (atlas-catalog-v0.2)')
     b.add_argument('--output', default=str(ROOT / 'web' / 'data' / 'merged.json'))
     b.add_argument('--private', action='store_true', help='Mark output as a private local catalog')
+    b.add_argument('--tree', help='Problem tree JSON from tools/import_tree.py to show on the map')
     r = sub.add_parser('repro', help='Run repro blocks and report; never edits records')
     r.add_argument('ids', nargs='*', help='Record ids; default: all records that have repro')
     r.add_argument('--files', nargs='*', default=[], help='Changed file paths (CI); non-ledger paths ignored')
@@ -447,7 +461,8 @@ def main(argv=None):
         return 0 if (a.template or not problems) else 1
 
     if a.cmd == 'build':
-        catalog = build(ledgers, a.private)
+        tree = json.loads(Path(a.tree).read_text(encoding='utf-8')) if a.tree else None
+        catalog = build(ledgers, a.private, tree)
         out = Path(a.output)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding='utf-8')

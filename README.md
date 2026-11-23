@@ -51,6 +51,17 @@ python serve.py --site web --port 8765    # http://127.0.0.1:8765
 
 The public site on GitHub Pages is built from `ledger/` only. It offers list, full-text search, filters by verdict, evidence level, domain and contributor, a timeline, a `Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up` graph, and a duplicate-review queue.
 
+## Problem map
+
+A ledger answers "what was tried". A problem tree answers "what is worth trying": domain → topic → area → open problem, each problem tied to the exact sentence where a paper posed it. `tools/import_tree.py` converts a literature-derived research tree into this form and adds audit hints (for example, a follow-up label that its own similarity scores don't support). Ledger records point at problems through `addresses`, so the map shows which open problems someone has already attacked and how it went.
+
+```bash
+python tools/import_tree.py research_tree.json --out tree.json          # public-safe: drops local paths
+python tools/ledger.py build --tree tree.json                           # map becomes the default view
+```
+
+Each area shows a one-line summary, papers to start with, what reviewers most often question, and ten-second problem cards (status, how explicitly the authors called it open, source page) with details folded away.
+
 ## Private ledgers
 
 Unpublished work uses the same format in a separate directory that never enters this repository:

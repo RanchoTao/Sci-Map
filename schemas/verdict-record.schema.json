@@ -105,6 +105,7 @@
       }
     },
     "follow_up": {"type": "string"},
+    "addresses": {"type": "array", "items": {"type": "string"}, "description": "Problem-tree node ids this record tests (see tools/import_tree.py)"},
     "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
     "license": {"type": "string", "description": "Defaults to CC-BY-4.0"}
   }

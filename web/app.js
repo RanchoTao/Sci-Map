@@ -129,7 +129,33 @@ const I18N = {
 "next": "Next",
 "footer": "A verdict applies only to the hypothesis and scope its evidence states. No record does not mean nobody tried.",
 "close": "Close",
-"lang_toggle": "中文"
+"lang_toggle": "中文",
+"nav_map": "Problem map",
+"map_none": "This catalog has no problem tree. Generate one with tools/import_tree.py and add it with build --tree.",
+"map_summary": "{areas} areas · {problems} open problems · {progress} with partial progress · {tried} already tried · {flagged} need a second look · as of {asof}",
+"map_updated": "The map changed since your last visit ({since}).",
+"map_nav_aria": "Research areas",
+"area_counts": "{open} open · {progress} progress · {tried} tried",
+"area_papers": "{n} papers in this area",
+"start_here": "Start reading here",
+"cites": "{n} citations",
+"reviewers_question": "Reviewers in this area most often question: {name} ({k}/{n} reviews)",
+"mf_all": "All",
+"mf_attention": "Needs attention",
+"mf_explicit": "Explicitly called open",
+"mf_progress": "Has progress",
+"mf_tried": "Tried",
+"map_no_problems": "No problems match this filter.",
+"project_link": "Linked project",
+"st_open": "Open",
+"st_progress": "Partial progress",
+"sg_explicit": "Explicit open problem",
+"sg_future": "Author future-work idea",
+"tried": "Tried",
+"check": "Check",
+"more": "Source and details",
+"orig_sentence": "Original sentence",
+"followup_h": "Follow-up search"
 },
 "zh": {
 "view_prefix": "查看 ",
@@ -259,7 +285,33 @@ const I18N = {
 "next": "下一页",
 "footer": "判决只适用于证据所声明的假设与范围。账本里没有记录，不代表没人试过。",
 "close": "关闭",
-"lang_toggle": "English"
+"lang_toggle": "English",
+"nav_map": "问题地图",
+"map_none": "这个目录没有问题树。用 tools/import_tree.py 生成后，以 build --tree 加入。",
+"map_summary": "{areas} 个方向 · {problems} 个开放问题 · {progress} 个已有部分进展 · {tried} 处有人尝试过 · {flagged} 处需要复查 · 截至 {asof}",
+"map_updated": "自你上次查看（{since}）以来地图已更新。",
+"map_nav_aria": "研究方向",
+"area_counts": "{open} 开放 · {progress} 有进展 · {tried} 尝试过",
+"area_papers": "本方向收录 {n} 篇论文",
+"start_here": "从这几篇开始读",
+"cites": "{n} 次引用",
+"reviewers_question": "这一方向的审稿人最常质疑：{name}（{k}/{n} 份评审）",
+"mf_all": "全部",
+"mf_attention": "需要注意",
+"mf_explicit": "作者明确称为开放问题",
+"mf_progress": "已有进展",
+"mf_tried": "有人尝试过",
+"map_no_problems": "这个筛选下没有问题。",
+"project_link": "关联项目",
+"st_open": "开放",
+"st_progress": "部分进展",
+"sg_explicit": "作者明确称为开放问题",
+"sg_future": "作者的后续工作设想",
+"tried": "有人尝试过",
+"check": "需复查",
+"more": "出处与细节",
+"orig_sentence": "原文句子",
+"followup_h": "后续工作检索"
 }
 };
 function detectLang() {
@@ -286,14 +338,14 @@ function setLang(lang) {
   if (typeof state !== 'undefined' && state.catalog) { refreshStatus(); metrics(); render(); }
 }
 const $ = (id) => document.getElementById(id);
-const titles = {list:'nav_list',timeline:'nav_timeline',graph:'nav_graph',review:'nav_review',inventory:'nav_inventory'};
+const titles = {map:'nav_map',list:'nav_list',timeline:'nav_timeline',graph:'nav_graph',review:'nav_review',inventory:'nav_inventory'};
 const state = {catalog:null,publicCatalog:null,privateLoaded:false,view:'list',page:1,pageSize:30,filtered:[],inventory:null};
 const element = (tag, text, cls) => {const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;};
 function textOf(r){return [r.id,r.topic_id,JSON.stringify(r.source_ids||[]),r.title,r.question,r.summary,r.search_text,r.scope,r.cause,r.hypothesis,r.result_summary,JSON.stringify(r.metrics||{}),JSON.stringify(r.source_status_history||[]),r.verification_basis,r.validation_boundary,r.historical_status,JSON.stringify(r.historical_verdict||''),r.historical_status_group,r.status,r.verification,r.project,r.domain,r.date,r.date_provenance,...(r.tags||[]),...(r.source_paths||[]),...(r.evidence||[]).flatMap(e=>[e.label,e.path,e.source_path,e.excerpt,e.date])].filter(Boolean).join('\n').toLowerCase();}
 function filterRecords(){const q=$('query').value.toLowerCase().trim().split(/\s+/).filter(Boolean);return state.catalog.records.filter(r=>q.every(t=>textOf(r).includes(t))&&(!$('status').value||r.status===$('status').value)&&(!$('domain').value||r.domain===$('domain').value)&&(!$('project').value||r.project===$('project').value)&&(!$('machine').value||(r.origin_machines||[r.machine]).includes($('machine').value))&&(!$('tag').value||(r.tags||[]).includes($('tag').value))&&(!$('kind').value||r.kind===$('kind').value)&&(!$('verification').value||r.verification===$('verification').value)&&(!$('result_verified').value||(r.result_verified===true)===($('result_verified').value==='true')));}
 function card(r){const node=element('article',undefined,'record');node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',t('view_prefix')+r.title);node.append(element('h3',r.title));const meta=element('div',undefined,'meta');meta.append(element('span',r.status,'badge '+r.status),element('span',r.project||'UNCLASSIFIED'),element('span',(r.origin_machines||[r.machine]).join(' · ')),element('span',r.date||t('date_unknown')));node.append(meta,element('p',r.summary||t('no_summary')),element('div',(r.tags||[]).join(' · '),'meta'));node.addEventListener('click',()=>details(r));node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();details(r);}});return node;}
 function metrics(){const rs=state.catalog.records;const vals=[[t('m_records'),rs.length],[t('m_sourced'),state.catalog.statistics?.source_documented_records||0],[t('m_receipts'),rs.filter(r=>r.result_verified===true).length],[t('m_indep'),state.catalog.statistics?.independently_reproduced_results||0],[t('m_failures'),rs.filter(r=>r.kind==='verdict'&&!['SUPPORTED','OPEN'].includes(r.status)).length],[t('m_contrib'),new Set(rs.flatMap(r=>r.origin_machines||[r.machine])).size],[t('m_dupes'),state.catalog.review_queue?.length||0]];$('metrics').replaceChildren(...vals.map(([k,v])=>{let n=element('div',undefined,'metric');n.append(element('strong',String(v)),element('span',k));return n;}));}
-function render(){if(!state.catalog)return;state.filtered=filterRecords();$('view-title').textContent=t(titles[state.view]);$('results').className=state.view==='timeline'?'timeline':state.view==='inventory'?'inventory':'records';const max=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.view!=='inventory')state.page=Math.min(state.page,max);$('result-count').textContent=state.filtered.length+t('n_matching');$('page').textContent=`${state.page} / ${max}`;$('prev').disabled=state.page<=1;$('next').disabled=state.page>=max;const batch=state.filtered.slice((state.page-1)*state.pageSize,state.page*state.pageSize);$('results').replaceChildren();if(state.view==='graph'){renderGraph(batch);return;}if(state.view==='review'){renderReview();return;}if(state.view==='inventory'){renderInventory();return;}if(!batch.length){$('results').append(element('div',t('empty_list'),'empty'));return;}if(state.view==='timeline'){const sorted=[...state.filtered].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')).slice((state.page-1)*state.pageSize,state.page*state.pageSize);let date;for(const r of sorted){if(date!==r.date){date=r.date;$('results').append(element('div',date||t('date_unknown'),'timeline-date'));}$('results').append(card(r));}}else $('results').append(...batch.map(card));}
+function render(){if(!state.catalog)return;setChrome(state.view==='map');if(state.view==='map'){renderMapView();return;}state.filtered=filterRecords();$('view-title').textContent=t(titles[state.view]);$('results').className=state.view==='timeline'?'timeline':state.view==='inventory'?'inventory':'records';const max=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.view!=='inventory')state.page=Math.min(state.page,max);$('result-count').textContent=state.filtered.length+t('n_matching');$('page').textContent=`${state.page} / ${max}`;$('prev').disabled=state.page<=1;$('next').disabled=state.page>=max;const batch=state.filtered.slice((state.page-1)*state.pageSize,state.page*state.pageSize);$('results').replaceChildren();if(state.view==='graph'){renderGraph(batch);return;}if(state.view==='review'){renderReview();return;}if(state.view==='inventory'){renderInventory();return;}if(!batch.length){$('results').append(element('div',t('empty_list'),'empty'));return;}if(state.view==='timeline'){const sorted=[...state.filtered].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')).slice((state.page-1)*state.pageSize,state.page*state.pageSize);let date;for(const r of sorted){if(date!==r.date){date=r.date;$('results').append(element('div',date||t('date_unknown'),'timeline-date'));}$('results').append(card(r));}}else $('results').append(...batch.map(card));}
 function renderReview(){const ids=new Set(state.filtered.map(r=>r.id));const queue=(state.catalog.review_queue||[]).filter(x=>x.record_ids.some(id=>ids.has(id)));if(!queue.length){$('results').append(element('div',t('empty_review'),'empty'));return;}for(const item of queue.slice((state.page-1)*30,state.page*30)){const node=element('article',undefined,'record review-card');node.append(element('h3',item.title_key),element('p',item.action));for(const id of item.record_ids){const r=state.catalog.records.find(r=>r.id===id);if(r){const b=element('button',r.title+' · '+r.status);b.onclick=()=>details(r);node.append(b);}}$('results').append(node);}}
 function renderGraph(batch){const c=state.catalog;const ids=new Set(batch.map(r=>r.id));const problemIds=new Set((c.nodes||[]).filter(n=>ids.has(n.record_id)).map(n=>n.id));let edges=(c.edges||[]).filter(e=>problemIds.has(e.source)||problemIds.has(e.target));let nodeIds=new Set(edges.flatMap(e=>[e.source,e.target]));let nodes=(c.nodes||[]).filter(n=>nodeIds.has(n.id)).slice(0,100);nodeIds=new Set(nodes.map(n=>n.id));edges=edges.filter(e=>nodeIds.has(e.source)&&nodeIds.has(e.target));$('results').append(element('p',t('graph_note',{n:nodes.length,e:edges.length}),'graph-note'));const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 1100 620');svg.setAttribute('class','graph-svg');svg.setAttribute('role','img');svg.setAttribute('aria-label',t('graph_aria'));const kinds=['Research Area','Problem','Hypothesis','Experiment','Evidence','Verdict','Follow-up'];const positions=new Map();for(const kind of kinds){const group=nodes.filter(n=>n.type===kind);group.forEach((n,i)=>positions.set(n.id,{x:70+kinds.indexOf(kind)*155,y:50+(i+.5)*520/Math.max(1,group.length)}));}for(const edge of edges){const a=positions.get(edge.source),b=positions.get(edge.target);if(!a||!b)continue;const line=document.createElementNS(ns,'line');for(const [key,val] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(key,val);const title=document.createElementNS(ns,'title');title.textContent=edge.type+' · '+(edge.provenance||[]).map(p=>p.label).join('; ');line.append(title);svg.append(line);}for(const n of nodes){const p=positions.get(n.id);const g=document.createElementNS(ns,'g');g.classList.add('graph-node');g.setAttribute('tabindex','0');g.setAttribute('role','button');g.setAttribute('aria-label',n.type+': '+n.label);const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x);circle.setAttribute('cy',p.y);circle.setAttribute('r',n.type==='Problem'?7:4);const text=document.createElementNS(ns,'text');text.setAttribute('x',p.x+10);text.setAttribute('y',p.y+4);text.textContent=n.label.slice(0,17);const title=document.createElementNS(ns,'title');title.textContent=n.type+': '+n.label;g.append(circle,text,title);const open=()=>{const r=state.catalog.records.find(r=>r.id===n.record_id)||state.catalog.records.find(r=>r.evidence?.some(e=>n.provenance?.some(p=>p.sha256===e.sha256)));if(r)details(r);};g.onclick=open;g.onkeydown=e=>{if(e.key==='Enter')open();};svg.append(g);}kinds.forEach((kind,i)=>{const label=document.createElementNS(ns,'text');label.setAttribute('x',25+i*155);label.setAttribute('y',20);label.textContent=kind;svg.append(label);});$('results').append(svg);}
 
@@ -372,7 +424,8 @@ function setCatalog(input, privateLoaded, fileName) {
   const catalog = validateCatalog(input);
   state.catalog = catalog;
   state.privateLoaded = Boolean(privateLoaded);
-  state.view = 'list';
+  state.view = input.tree ? 'map' : 'list';
+  state.mapNode = null;
   state.page = 1;
   state.filtered = [];
   const dlg = $('details');
@@ -391,7 +444,8 @@ function setCatalog(input, privateLoaded, fileName) {
       select.append(option);
     }
   }
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active',b.dataset.view==='list'));
+  document.querySelectorAll('aside nav button').forEach(b => b.classList.toggle('active',b.dataset.view===state.view));
+  const mapBtn = document.querySelector ? document.querySelector('aside nav button[data-view=map]') : null; if (mapBtn) mapBtn.hidden = !input.tree;
   const count = catalog.records.length;
   state.fileName = fileName || '';
   refreshStatus();
@@ -404,7 +458,7 @@ function refreshStatus() {
   const catalog = state.catalog, count = catalog.records.length, privateLoaded = state.privateLoaded;
   $('private-status').dataset.mode = privateLoaded ? 'private' : 'public';
   $('private-status').textContent = privateLoaded
-    ? t('status_private',{file:state.fileName || t('private_dir'),n:count})
+    ? t('status_private',{file:state.fileName || t('local_served'),n:count})
     : (count ? t('status_public',{n:count}) : t('status_empty'));
   $('clear-private').disabled = !privateLoaded;
   $('load-state').classList.remove('error');
@@ -443,12 +497,164 @@ async function init() {
     const catalog = validateCatalog(await response.json());
     // The public site ships an empty default catalog. Local servers may serve private data.
     // Public ledger catalogs (and empty ones) are safe to keep as the reset target; a locally served private catalog is not.
-    const isPublic = String(catalog.data_policy || '').startsWith('PUBLIC_') || catalog.records.length === 0;
+    const policy = String(catalog.data_policy || '');
+    const isPublic = policy.startsWith('PUBLIC_') || (!policy.startsWith('PRIVATE') && catalog.records.length === 0 && !catalog.tree);
     state.publicCatalog = isPublic ? catalog : {...catalog,records:[],nodes:[],edges:[],review_queue:[],source_archives:{}};
-    setCatalog(catalog,!isPublic,!isPublic ? t('local_served') : '');
+    setCatalog(catalog,!isPublic,'');
   } catch (error) {
     $('load-state').textContent = error.message;
     $('load-state').classList.add('error');
   }
 }
-for(const id of ['query','domain','project','status','machine','tag','kind','verification','result_verified'])$(id).addEventListener(id==='query'?'input':'change',()=>{state.page=1;render();});document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.page=1;document.querySelectorAll('nav button').forEach(n=>n.classList.toggle('active',n===b));render();});$('prev').onclick=()=>{state.page--;render();};$('next').onclick=()=>{state.page++;render();};$('close').onclick=()=>$('details').close();$('private-file').addEventListener('change',onPrivateFileChange);$('clear-private').onclick=clearPrivateCatalog;$('export').onclick=()=>{const blob=new Blob([JSON.stringify({schema_version:state.catalog.schema_version,data_policy:'PRIVATE_LOCAL_DERIVED',records:state.filtered},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=element('a');a.href=url;a.download='research-atlas-filtered-private.json';a.click();URL.revokeObjectURL(url);};if(document.getElementById('lang-toggle'))$('lang-toggle').onclick=()=>setLang(LANG==='en'?'zh':'en');applyI18n();init();
+for(const id of ['query','domain','project','status','machine','tag','kind','verification','result_verified'])$(id).addEventListener(id==='query'?'input':'change',()=>{state.page=1;render();});document.querySelectorAll('aside nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.page=1;document.querySelectorAll('aside nav button').forEach(n=>n.classList.toggle('active',n===b));render();});$('prev').onclick=()=>{state.page--;render();};$('next').onclick=()=>{state.page++;render();};$('close').onclick=()=>$('details').close();$('private-file').addEventListener('change',onPrivateFileChange);$('clear-private').onclick=clearPrivateCatalog;$('export').onclick=()=>{const blob=new Blob([JSON.stringify({schema_version:state.catalog.schema_version,data_policy:'PRIVATE_LOCAL_DERIVED',records:state.filtered},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=element('a');a.href=url;a.download='research-atlas-filtered-private.json';a.click();URL.revokeObjectURL(url);};
+/* ---------------------------------------------------------------- Problem-tree map
+   The default view when a catalog carries a problem tree. Designed to keep
+   reading cost low: one summary line, a tree on the left, ten-second cards on
+   the right, details folded until asked for. */
+const MAP_FILTERS = ['all','attention','explicit','progress','tried'];
+function setChrome(isMap) {
+  if (!document.querySelector) return;
+  for (const sel of ['#metrics','.filters','.pagination','#result-count','#export']) {
+    const el = document.querySelector(sel); if (el) el.hidden = isMap;
+  }
+}
+function chip(text, cls) { return element('span', text, 'chip ' + (cls || '')); }
+function treeIndex(tree) {
+  const byId = new Map(tree.nodes.map(n => [n.id, n]));
+  const kids = new Map();
+  for (const n of tree.nodes) { if (!kids.has(n.parent)) kids.set(n.parent, []); kids.get(n.parent).push(n); }
+  return {byId, kids};
+}
+function recordsFor(nodeId) { return state.catalog.records.filter(r => (r.addresses || []).includes(nodeId)); }
+function problemTried(n) { return (n.attempts || []).length + recordsFor(n.id).length > 0; }
+function needsAttention(n) { return (n.flags || []).length > 0 || n.problem?.status === 'partially_solved' || problemTried(n); }
+function areaStats(area, idx) {
+  const probs = (idx.kids.get(area.id) || []).filter(n => n.level === 'problem');
+  return {total: probs.length,
+    open: probs.filter(n => n.problem.status === 'open').length,
+    progress: probs.filter(n => n.problem.status !== 'open').length,
+    tried: probs.filter(problemTried).length + ((area.attempts || []).length ? 1 : 0),
+    flagged: probs.filter(n => (n.flags || []).length).length};
+}
+function seenKey() { return 'scimap-seen-' + (state.catalog.tree.scope || 'tree'); }
+function lastSeen() { try { return window.localStorage.getItem(seenKey()); } catch (e) { return null; } }
+function markSeen() { try { window.localStorage.setItem(seenKey(), state.catalog.tree.as_of || ''); } catch (e) { /* ignore */ } }
+function flagText(f) { return LANG === 'zh' ? f.text_zh : f.text_en; }
+function renderMapView() {
+  const out = $('results');
+  out.className = 'map';
+  out.replaceChildren();
+  $('view-title').textContent = t('nav_map');
+  const tree = state.catalog.tree;
+  if (!tree || !Array.isArray(tree.nodes) || !tree.nodes.length) { out.append(element('div', t('map_none'), 'empty')); return; }
+  const idx = treeIndex(tree);
+  const areas = tree.nodes.filter(n => n.level === 'area');
+  const probs = tree.nodes.filter(n => n.level === 'problem');
+  if (!state.mapNode || !idx.byId.has(state.mapNode)) state.mapNode = areas[0]?.id;
+  state.mapFilter = state.mapFilter || 'all';
+  // One-line state of the whole map.
+  const seen = lastSeen();
+  const summary = element('p', t('map_summary', {areas: areas.length, problems: probs.length,
+    progress: probs.filter(n => n.problem.status !== 'open').length,
+    tried: probs.filter(problemTried).length + areas.filter(a => (a.attempts || []).length).length,
+    flagged: tree.nodes.filter(n => (n.flags || []).length).length, asof: tree.as_of || '?'}), 'map-summary');
+  out.append(summary);
+  if (seen !== null && seen !== (tree.as_of || '')) out.append(element('p', t('map_updated', {since: seen || '—'}), 'map-updated'));
+  markSeen();
+  const layout = element('div', undefined, 'map-layout');
+  const nav = element('nav', undefined, 'map-nav');
+  nav.setAttribute('aria-label', t('map_nav_aria'));
+  for (const topic of tree.nodes.filter(n => n.level === 'topic')) {
+    nav.append(element('div', (topic.branch ? topic.branch + ' · ' : '') + topic.name, 'map-topic'));
+    for (const area of (idx.kids.get(topic.id) || []).filter(n => n.level === 'area')) {
+      const s = areaStats(area, idx);
+      const b = element('button', undefined, 'map-area' + (area.id === state.mapNode ? ' active' : ''));
+      b.append(element('span', area.name, 'map-area-name'));
+      const bar = element('span', undefined, 'map-bar');
+      for (const [k, v] of [['open', s.open], ['progress', s.progress]]) {
+        const seg = element('span', undefined, 'seg ' + k); seg.style.flexGrow = String(v || 0); bar.append(seg);
+      }
+      b.append(bar, element('span', t('area_counts', s), 'map-area-meta'));
+      b.onclick = () => { state.mapNode = area.id; renderMapView(); };
+      nav.append(b);
+    }
+  }
+  layout.append(nav, renderAreaPanel(idx.byId.get(state.mapNode), idx));
+  out.append(layout);
+}
+function renderAreaPanel(area, idx) {
+  const panel = element('section', undefined, 'map-panel');
+  if (!area) return panel;
+  panel.append(element('h2', area.name), element('p', area.definition, 'map-def'));
+  const meta = [t('area_papers', {n: area.paper_count})];
+  if (area.keywords?.length) meta.push(area.keywords.slice(0, 5).join(' · '));
+  panel.append(element('p', meta.join(' — '), 'detail-meta'));
+  if (area.papers?.length) {
+    panel.append(element('h3', t('start_here')));
+    const ul = element('ul', undefined, 'start-list');
+    for (const p of area.papers) {
+      const li = element('li'); const a = element('a', p.title); a.href = p.url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      li.append(a, element('span', ' · ' + (p.year || '') + (p.citation_count != null ? ' · ' + t('cites', {n: p.citation_count}) : ''), 'detail-meta'));
+      ul.append(li);
+    }
+    panel.append(ul);
+  }
+  if (area.concerns?.length) {
+    const c = area.concerns[0];
+    panel.append(element('p', t('reviewers_question', {name: c.name, k: c.reviews, n: c.denominator}), 'map-concern'));
+  }
+  for (const f of area.flags || []) panel.append(element('p', '⚠ ' + flagText(f), 'map-flag'));
+  for (const a of area.attempts || []) panel.append(attemptRow(a));
+  const tools = element('div', undefined, 'map-filters');
+  tools.setAttribute('role', 'group');
+  for (const f of MAP_FILTERS) {
+    const b = element('button', t('mf_' + f), state.mapFilter === f ? 'active' : '');
+    b.setAttribute('aria-pressed', String(state.mapFilter === f));
+    b.onclick = () => { state.mapFilter = f; renderMapView(); };
+    tools.append(b);
+  }
+  panel.append(tools);
+  let probs = (idx.kids.get(area.id) || []).filter(n => n.level === 'problem');
+  const pick = {all: () => true, attention: needsAttention, explicit: n => n.problem.strength === 'explicit_open_problem',
+    progress: n => n.problem.status !== 'open', tried: problemTried}[state.mapFilter] || (() => true);
+  probs = probs.filter(pick).sort((a, b) => Number(needsAttention(b)) - Number(needsAttention(a)));
+  if (!probs.length) panel.append(element('div', t('map_no_problems'), 'empty'));
+  for (const n of probs) panel.append(problemCard(n, idx));
+  return panel;
+}
+function attemptRow(a) {
+  const row = element('div', undefined, 'attempt');
+  row.append(chip(a.verdict || t('project_link'), a.verdict === 'KILL' ? 'kill' : 'link'),
+    element('span', [a.project, a.item_id, a.date].filter(Boolean).join(' · ')));
+  if (a.scope || a.note) row.append(element('p', a.scope || a.note, 'detail-meta'));
+  return row;
+}
+function problemCard(n, idx) {
+  const p = n.problem;
+  const card = element('article', undefined, 'pcard' + (needsAttention(n) ? ' attention' : ''));
+  const chips = element('div', undefined, 'chips');
+  chips.append(chip(p.status === 'open' ? t('st_open') : t('st_progress'), p.status === 'open' ? 'open' : 'progress'));
+  chips.append(chip(p.strength === 'explicit_open_problem' ? t('sg_explicit') : t('sg_future'), 'strength'));
+  if (problemTried(n)) chips.append(chip(t('tried'), 'tried'));
+  if ((n.flags || []).length) chips.append(chip('⚠ ' + t('check'), 'flag'));
+  card.append(chips, element('h3', p.statement));
+  const src = element('p', undefined, 'pcard-src');
+  const a = element('a', (p.source_title || p.source_paper) + (p.date ? ' (' + p.date.slice(0, 4) + ')' : ''));
+  a.href = p.source_url || '#'; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  src.append(a, element('span', ' · ' + (p.locator || ''), 'detail-meta'));
+  card.append(src);
+  const more = element('details');
+  more.append(element('summary', t('more')));
+  more.append(element('h4', t('orig_sentence')), element('blockquote', p.quote || ''));
+  for (const f of n.flags || []) more.append(element('p', '⚠ ' + flagText(f), 'map-flag'));
+  more.append(element('h4', t('followup_h')), element('p', [p.follow_up?.outcome, p.status_basis].filter(Boolean).join(' · ') || '—', 'detail-meta'));
+  const cands = (p.follow_up?.candidates || []).filter(c => (c.similarity || 0) >= 0.05);
+  for (const c of cands) { const l = element('a', c.title + (c.year ? ' (' + c.year + ')' : '')); l.href = c.url || '#'; l.target = '_blank'; l.rel = 'noopener noreferrer'; more.append(l, element('br')); }
+  for (const at of n.attempts || []) more.append(attemptRow(at));
+  for (const r of recordsFor(n.id)) { const b = element('button', r.status + ' · ' + r.title, 'linked-record'); b.onclick = () => details(r); more.append(b); }
+  for (const x of n.cross_links || []) { const other = idx.byId.get(x.id); if (other) more.append(element('p', (x.type || '') + ' → ' + other.name, 'detail-meta')); }
+  card.append(more);
+  return card;
+}
+
+if(document.getElementById('lang-toggle'))$('lang-toggle').onclick=()=>setLang(LANG==='en'?'zh':'en');applyI18n();init();
