@@ -70,13 +70,13 @@ def problem(node):
         flags.append({'code': 'weak_followup_match',
                       'text_en': 'Labelled as having related follow-up work, but the best candidate has similarity ≈ 0. Treat as "no related follow-up found".',
                       'text_zh': '标为"有相近后续文献"，但最相近候选的相似度约为 0。应视为"未发现相关后续"。'})
-    explicit = bool(EXPLICIT.search(op.get('quote', '')))
+    strength = op.get('strength') or ('explicit_open_problem' if EXPLICIT.search(op.get('quote', '')) else 'author_future_work')
     return {
         'statement': op.get('statement') or node.get('name'),
         'quote': op.get('quote'), 'source_paper': op.get('source_paper'), 'source_title': op.get('source_title'),
         'source_url': op.get('source_url'), 'locator': op.get('locator'), 'date': op.get('date'),
         'status': op.get('status', 'open'), 'status_basis': op.get('status_basis'),
-        'strength': 'explicit_open_problem' if explicit else 'author_future_work',
+        'strength': strength, 'selection': op.get('selection'), 'context_quote': op.get('context_quote'),
         'follow_up': {'outcome': fu.get('screen_outcome'), 'resolution': fu.get('current_resolution'),
                       'candidates': [{'title': s.get('title'), 'url': s.get('url'), 'year': s.get('year'),
                                       'similarity': s.get('similarity')} for s in shortlist[:3]]},

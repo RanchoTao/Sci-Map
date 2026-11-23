@@ -155,7 +155,9 @@ const I18N = {
 "check": "Check",
 "more": "Source and details",
 "orig_sentence": "Original sentence",
-"followup_h": "Follow-up search"
+"followup_h": "Follow-up search",
+"context_sentence": "Context",
+"anchor_manual": "Hand-picked anchor problem, not part of the search sample."
 },
 "zh": {
 "view_prefix": "查看 ",
@@ -311,7 +313,9 @@ const I18N = {
 "check": "需复查",
 "more": "出处与细节",
 "orig_sentence": "原文句子",
-"followup_h": "后续工作检索"
+"followup_h": "后续工作检索",
+"context_sentence": "上下文",
+"anchor_manual": "此问题为手工加入的锚文/项目相关问题，不是检索抽样所得。"
 }
 };
 function detectLang() {
@@ -646,6 +650,8 @@ function problemCard(n, idx) {
   const more = element('details');
   more.append(element('summary', t('more')));
   more.append(element('h4', t('orig_sentence')), element('blockquote', p.quote || ''));
+  if (p.context_quote) more.append(element('h4', t('context_sentence')), element('blockquote', p.context_quote));
+  if (p.selection === 'anchor_manual') more.append(element('p', t('anchor_manual'), 'detail-meta'));
   for (const f of n.flags || []) more.append(element('p', '⚠ ' + flagText(f), 'map-flag'));
   more.append(element('h4', t('followup_h')), element('p', [p.follow_up?.outcome, p.status_basis].filter(Boolean).join(' · ') || '—', 'detail-meta'));
   const cands = (p.follow_up?.candidates || []).filter(c => (c.similarity || 0) >= 0.05);
