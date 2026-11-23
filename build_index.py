@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build a private, provenance-preserving catalog from verified machine ZIPs.
 
-Compatible with Research Atlas Starter build_index.py. Scientific verdicts are
+Compatible with Sci-Map Starter build_index.py. Scientific verdicts are
 never inferred from a token or filename. Duplicate content retains all origins.
 """
 import argparse

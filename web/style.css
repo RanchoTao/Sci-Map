@@ -12,3 +12,4 @@
 #private-status[data-mode=private]{color:var(--green)}
 #private-status[data-mode=error]{color:var(--red)}
 @media (max-width:640px){.private-loader{padding:14px}.private-loader-controls{display:grid;grid-template-columns:1fr}.private-loader-controls input[type=file]{min-width:0;width:100%}}
+.lang-toggle{width:100%;margin:-20px 0 18px;font-size:12px;background:transparent;text-align:left}.policy a{color:var(--green)}

@@ -38,8 +38,8 @@ const run=expr=>vm.runInContext(expr,context);
   await new Promise(resolve=>setImmediate(resolve)); // Allow initial empty-site fetch to reject.
   assert.equal(run('secureOrigin()'),true);
   assert.equal(run('validateCatalog({schema_version:"atlas-catalog-v0.2",records:[],nodes:[],edges:[]}).records.length'),0);
-  assert.throws(()=>run('validateCatalog({schema_version:"wrong",records:[],nodes:[],edges:[]})'),/版本不兼容/);
-  assert.throws(()=>run('validateCatalog({schema_version:"atlas-catalog-v0.2",records:"bad",nodes:[],edges:[]})'),/数组字段/);
+  assert.throws(()=>run('validateCatalog({schema_version:"wrong",records:[],nodes:[],edges:[]})'),/版本不兼容|Incompatible catalog version/);
+  assert.throws(()=>run('validateCatalog({schema_version:"atlas-catalog-v0.2",records:"bad",nodes:[],edges:[]})'),/数组字段|missing array field/);
   context.testFile={name:'merged.json',size:100,text:async()=>JSON.stringify(privateCatalog)};
   assert.equal(await run('importPrivateFile(testFile)'),true);
   assert.equal(run('state.catalog.records.length'),1);
@@ -55,13 +55,13 @@ const run=expr=>vm.runInContext(expr,context);
   assert.equal(run('state.catalog.records.length'),0);
   assert.equal(run('state.privateLoaded'),false);
   context.window.location.protocol='http:';
-  await assert.rejects(async()=>run('importPrivateFile(testFile)'),/不是 HTTPS/);
+  await assert.rejects(async()=>run('importPrivateFile(testFile)'),/不是 HTTPS|not served over HTTPS/);
   context.window.location.hostname='localhost';
   assert.equal(run('secureOrigin()'),true);
   context.window.location.hostname='ranchotao.com';
   context.window.location.protocol='https:';
   context.testFile={name:'bad.zip',size:100,text:async()=>{throw Error('unread')}};
-  await assert.rejects(async()=>run('importPrivateFile(testFile)'),/不支持 ZIP/);
+  await assert.rejects(async()=>run('importPrivateFile(testFile)'),/不支持 ZIP|ZIP and other formats/);
   context.testFile={name:'merged.json',size:70*1024*1024,text:async()=>{throw Error('unread')}};
   await assert.rejects(async()=>run('importPrivateFile(testFile)'),/64 MiB/);
   assert.equal(calls.length,1); // Only the initial same-origin public catalog fetch.

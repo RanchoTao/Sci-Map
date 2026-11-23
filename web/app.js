@@ -1,16 +1,301 @@
 /* No telemetry, network dependencies, auto-upload, or verdict inference. */
 'use strict';
+const I18N = {
+"en": {
+"view_prefix": "View ",
+"date_unknown": "date unknown",
+"no_summary": "No summary",
+"m_records": "Records",
+"m_sourced": "Source-documented or better",
+"m_receipts": "CI or receipt verified",
+"m_indep": "Independently reproduced",
+"m_failures": "Failures / dead ends",
+"m_contrib": "Contributors / sources",
+"m_dupes": "Possible duplicates",
+"n_matching": " matching records",
+"empty_list": "No matching records. A gap in the ledger does not mean nobody has tried this.",
+"empty_review": "No duplicate candidates for this filter. Title similarity is not proof of semantic duplication.",
+"graph_aria": "Research graph with provenance",
+"unnamed_source": "Unnamed source",
+"has_excerpt": "with excerpt",
+"locator_only": "locator only",
+"n_cited": " cited source locations",
+"inv_note": "Built only from the loaded catalog; not a full file inventory. No query, path or record id is sent to any server.",
+"inv_empty": "This catalog has no evidence locations to show.",
+"th_path": "Cited source path",
+"th_machine": "Source",
+"th_count": "Citations / evidence",
+"not_provided": "not provided",
+"times_sep": " × · ",
+"scope_unreviewed": "Scope not reviewed",
+"h_summary": "Outcome / summary",
+"h_evidence": "Evidence and provenance",
+"lines_prefix": "lines ",
+"btn_preview": "Verify and preview source",
+"preview_truncated": "\n[Preview truncated; restore the full original from the private archive]",
+"sha_verified": "SHA-256 verified",
+"public_source": "Public source",
+"source_ids": "Source record ids: ",
+"h_peer": "Peer historical judgment (unverified; does not change status)",
+"h_history": "Status history (as recorded by the source)",
+"receipt_yes": "Result check passed within its declared scope; not an independent scientific reproduction",
+"receipt_no": "Result not checked or no receipt provided",
+"contributor": "Contributor: ",
+"operator": " · operator ",
+"h_cause": "Cause (as far as the evidence shows)",
+"h_setup": "Setup",
+"h_repro": "CI repro command",
+"expect": "\nExpect: ",
+"h_reproductions": "Reproductions",
+"h_followup": "Follow-up",
+"ledger_file": "Ledger file: ",
+"h_hypothesis": "Hypothesis",
+"h_results": "Recorded outcome / metrics",
+"h_boundary": "Evidence validity boundary",
+"exp_status": "Experiment status: ",
+"result_kind": "Result kind: ",
+"h_basis": "Verification basis",
+"h_vscope": "Scope of the verified result",
+"h_chain": "Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up",
+"h_hints": "Status words found in source (unreviewed)",
+"no_hints": "none extracted",
+"err_object": "Choose a valid Sci-Map catalog JSON object",
+"err_version": "Incompatible catalog version: expected an atlas-catalog-v0.2 merged.json, not a raw archive ZIP or manifest",
+"err_array": "Catalog is missing array field: ",
+"err_size": "Catalog exceeds the browser safety limit",
+"err_record": "Incomplete record at index ",
+"err_evidence": "Record evidence must be an array, index ",
+"err_queue": "review_queue must be an array",
+"err_https": "This page is not served over HTTPS or localhost; refusing to read a private file",
+"err_ext": "Choose a generated merged.json; ZIP and other formats are not supported",
+"err_filesize": "JSON file is empty or larger than 64 MiB",
+"import_failed": "Import failed: ",
+"import_kept": ". The current map is unchanged.",
+"err_default": "Default catalog not found; run `python tools/ledger.py build` or open the deployed site",
+"local_served": "catalog served by this machine",
+"private_dir": "private catalog",
+"gen_unknown": "generation time unknown",
+"graph_note": "{n} nodes · {e} links on this page. Links are provenance and section relations, not causation. At most 100 nodes; narrow with filters.",
+"status_private": "Opened {file} in this browser's memory · {n} records. Nothing uploaded, stored or upgraded.",
+"status_public": "Public verdict ledger · {n} records (CC BY 4.0). Choose a local merged.json to view a private map in memory only; nothing is uploaded.",
+"status_empty": "The public ledger has no records yet. Choose a trusted local merged.json to view a private map.",
+"load_state": "{mode} · {time} · {n} records · {e} index errors",
+"mode_private": "Local private catalog",
+"mode_public": "Public verdict ledger",
+"mode_empty": "Empty public catalog",
+"title": "Sci-Map · Research verdict ledger",
+"tagline": "Failures count",
+"nav_aria": "Map views",
+"nav_list": "Records",
+"nav_timeline": "Timeline",
+"nav_graph": "Graph",
+"nav_review": "Duplicates & conflicts",
+"nav_inventory": "Source inventory",
+"policy": "A public ledger of tested research hypotheses and their scoped verdicts. Check before you run; don't repeat someone else's dead end. Contribute by GitHub pull request.",
+"contribute": "How to contribute",
+"eyebrow": "EVIDENCE BEFORE VERDICT",
+"h1": "Check the dead ends before you run.",
+"lede": "Each record is a tested hypothesis: within what scope it failed or held, why, and how strong the evidence is. Source claims, CI reproductions and independent reproductions are labelled separately.",
+"loading": "Loading ledger…",
+"loader_aria": "Open a private map locally in this browser",
+"loader_title": "Open a private map on this device",
+"loader_text": "Choose a merged.json built with tools/ledger.py build --private. It is parsed in browser memory only: never uploaded or cached. Reloading clears it.",
+"loader_label": "Choose local catalog JSON",
+"clear_private": "Clear private map from memory",
+"private_initial": "No private catalog loaded.",
+"metrics_aria": "Ledger statistics",
+"f_search": "Search",
+"f_search_ph": "hypothesis / cause / method / domain",
+"f_domain": "Domain",
+"f_domain_all": "All domains",
+"f_project": "Project",
+"f_project_all": "All projects",
+"f_status": "Verdict",
+"f_status_all": "All verdicts",
+"f_machine": "Contributor / source",
+"f_machine_all": "All contributors",
+"f_tag": "Tag",
+"f_tag_all": "All tags",
+"f_kind": "Record kind",
+"f_kind_all": "All kinds",
+"f_verification": "Evidence level",
+"f_verification_all": "All levels",
+"f_receipt": "Reproduction",
+"f_receipt_all": "Any",
+"f_receipt_true": "Reproduced or receipt checked",
+"f_receipt_false": "Not reproduced / unchecked",
+"export": "Export filtered JSON",
+"prev": "Previous",
+"next": "Next",
+"footer": "A verdict applies only to the hypothesis and scope its evidence states. No record does not mean nobody tried.",
+"close": "Close",
+"lang_toggle": "中文"
+},
+"zh": {
+"view_prefix": "查看 ",
+"date_unknown": "日期未知",
+"no_summary": "暂无摘要",
+"m_records": "课题 / 结果 / 待核对线索记录",
+"m_sourced": "来源已核对记录",
+"m_receipts": "历史结果凭据已核对",
+"m_indep": "独立复现结果",
+"m_failures": "失败 / 死路记录",
+"m_contrib": "贡献者 / 来源机器",
+"m_dupes": "重复 / 版本待审",
+"n_matching": " 条匹配记录",
+"empty_list": "没有匹配记录。未采集或未审阅不表示该方向从未研究。",
+"empty_review": "当前筛选下没有重复候选。标题相似检索不是科学上的语义去重证明。",
+"graph_aria": "有来源的研究关系图",
+"unnamed_source": "未命名来源",
+"has_excerpt": "附有来源摘录",
+"locator_only": "仅有来源定位",
+"n_cited": " 个已引用的来源位置",
+"inv_note": "当前表仅根据已导入的轻量目录生成，不等同全机器文件覆盖清单。不会发送查询、路径或记录 ID 到服务器。",
+"inv_empty": "此目录没有可显示的来源证据定位。",
+"th_path": "引用来源路径",
+"th_machine": "机器",
+"th_count": "被引用次数 / 证据范围",
+"not_provided": "未提供",
+"times_sep": " 次 · ",
+"scope_unreviewed": "适用范围未审阅",
+"h_summary": "来源内容摘要",
+"h_evidence": "验证依据与来源定位",
+"lines_prefix": "行 ",
+"btn_preview": "校验并预览原始文本",
+"preview_truncated": "\n[预览截断；请从私有归档恢复完整原件]",
+"sha_verified": "SHA-256 已验证",
+"public_source": "公开来源",
+"source_ids": "源机器记录 ID：",
+"h_peer": "对端历史判断（原文待核对，不自动提升当前状态）",
+"h_history": "历史状态（来源记载，不自动判定冲突）",
+"receipt_yes": "历史结果凭据已核对；以声明的校验范围为准，不代表独立科学复现",
+"receipt_no": "历史结果凭据尚未核对或未提供",
+"contributor": "贡献者：",
+"operator": " · 负责人 ",
+"h_cause": "原因（证据所示范围内）",
+"h_setup": "实验设置",
+"h_repro": "CI 复现命令",
+"expect": "\n期望：",
+"h_reproductions": "独立复现记录",
+"h_followup": "后续",
+"ledger_file": "账本文件：",
+"h_hypothesis": "研究假设",
+"h_results": "已记载结果 / 指标",
+"h_boundary": "证据有效性边界",
+"exp_status": "实验状态：",
+"result_kind": "结果类型：",
+"h_basis": "验证边界 / 对端校验记载",
+"h_vscope": "已核对结果的限定范围",
+"h_chain": "问题 → 假设 → 实验 → 证据 → 判断 → 后续",
+"h_hints": "已发现的状态词（待审阅）",
+"no_hints": "未提取状态词",
+"err_object": "请选择有效的研究地图 JSON 对象",
+"err_version": "目录版本不兼容：需要 atlas-catalog-v0.2 的 merged.json，而不是原始归档 ZIP 或源清单",
+"err_array": "目录缺少数组字段：",
+"err_size": "目录记录量超出本地浏览器安全上限",
+"err_record": "研究记录字段不完整，位置：",
+"err_evidence": "研究记录的 evidence 必须是数组，位置：",
+"err_queue": "review_queue 必须是数组",
+"err_https": "当前网页不是 HTTPS 或 localhost。拒绝读取私有文件，请通过安全的 HTTPS 网址打开网站",
+"err_ext": "请选择生成后的 merged.json 文件，不支持 ZIP 或其他格式",
+"err_filesize": "JSON 文件大小不合法或超过 64 MiB 限制",
+"import_failed": "导入失败：",
+"import_kept": "。已有地图保持不变。",
+"err_default": "找不到默认目录；请先运行本地构建或打开已部署的 Pages",
+"local_served": "本机服务提供的目录",
+"private_dir": "私有目录",
+"gen_unknown": "生成时间未知",
+"graph_note": "本页 {n} 个来源节点 · {e} 条引用关系。连线是来源与章节关联，不表示因果关系。最多显示 100 个节点；使用筛选缩小范围。",
+"status_private": "已在本机内存打开 {file} · {n} 条记录。没有上传、持久化或科学有效性升级。",
+"status_public": "公开判决账本 · {n} 条记录（CC BY 4.0）。选择本地 merged.json 可临时切换为私有地图，只在内存中，不上传。",
+"status_empty": "公开账本暂无记录。选择可信的本地 merged.json 即可临时打开私有地图。",
+"load_state": "{mode} · {time} · {n} 条记录 · {e} 个索引错误",
+"mode_private": "已加载本地私有目录",
+"mode_public": "公开判决账本",
+"mode_empty": "公开空目录",
+"title": "Sci-Map · 研究判决账本",
+"tagline": "失败也是贡献",
+"nav_aria": "地图视图",
+"nav_list": "研究记录",
+"nav_timeline": "时间线",
+"nav_graph": "关系图",
+"nav_review": "重复与冲突待审",
+"nav_inventory": "来源清单",
+"policy": "公开账本记录被检验过的研究假设及其限定范围内的判决。查过再跑，别重复别人的死路。通过 GitHub PR 贡献。",
+"contribute": "如何贡献",
+"eyebrow": "EVIDENCE BEFORE VERDICT",
+"h1": "开跑之前，先查死路。",
+"lede": "每条记录是一个被检验过的假设：在什么范围内、因为什么失败或成立、证据到哪一级。来源记载、CI 复现与独立复现分开标注。",
+"loading": "正在读取账本…",
+"loader_aria": "在浏览器本地打开私有地图",
+"loader_title": "在这台设备上打开私有地图",
+"loader_text": "选择用 tools/ledger.py build --private 生成的 merged.json。只在浏览器内存中解析和检索，不上传、不缓存。刷新页面即清除。",
+"loader_label": "选择本地目录 JSON",
+"clear_private": "清空内存中的私有地图",
+"private_initial": "未加载私有目录。",
+"metrics_aria": "账本统计",
+"f_search": "全文检索",
+"f_search_ph": "假设 / 失败原因 / 方法 / 领域",
+"f_domain": "领域",
+"f_domain_all": "全部领域",
+"f_project": "项目",
+"f_project_all": "全部项目",
+"f_status": "判决",
+"f_status_all": "全部判决",
+"f_machine": "贡献者 / 来源",
+"f_machine_all": "全部贡献者",
+"f_tag": "标签",
+"f_tag_all": "全部标签",
+"f_kind": "记录类型",
+"f_kind_all": "全部类型",
+"f_verification": "证据层级",
+"f_verification_all": "全部层级",
+"f_receipt": "复现凭据",
+"f_receipt_all": "全部",
+"f_receipt_true": "已复现或凭据已核对",
+"f_receipt_false": "未复现 / 未核对",
+"export": "导出当前筛选 JSON",
+"prev": "上一页",
+"next": "下一页",
+"footer": "判决只适用于证据所声明的假设与范围。账本里没有记录，不代表没人试过。",
+"close": "关闭",
+"lang_toggle": "English"
+}
+};
+function detectLang() {
+  try { const saved = window.localStorage.getItem('scimap-lang'); if (saved === 'en' || saved === 'zh') return saved; } catch (e) { /* storage unavailable */ }
+  try { return String(navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en'; } catch (e) { return 'en'; }
+}
+let LANG = detectLang();
+function t(key, vars) {
+  let text = (I18N[LANG] && I18N[LANG][key]) ?? I18N.en[key] ?? key;
+  if (vars) text = text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  return text;
+}
+function applyI18n() {
+  if (document.documentElement) document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('title');
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder));
+  for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
+}
+function setLang(lang) {
+  LANG = lang === 'zh' ? 'zh' : 'en';
+  try { window.localStorage.setItem('scimap-lang', LANG); } catch (e) { /* storage unavailable */ }
+  applyI18n();
+  if (typeof state !== 'undefined' && state.catalog) { refreshStatus(); metrics(); render(); }
+}
 const $ = (id) => document.getElementById(id);
-const titles = {list:'研究记录',timeline:'来源时间线',graph:'关系图',review:'重复与冲突待审',inventory:'来源清单'};
+const titles = {list:'nav_list',timeline:'nav_timeline',graph:'nav_graph',review:'nav_review',inventory:'nav_inventory'};
 const state = {catalog:null,publicCatalog:null,privateLoaded:false,view:'list',page:1,pageSize:30,filtered:[],inventory:null};
 const element = (tag, text, cls) => {const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;};
 function textOf(r){return [r.id,r.topic_id,JSON.stringify(r.source_ids||[]),r.title,r.question,r.summary,r.search_text,r.scope,r.cause,r.hypothesis,r.result_summary,JSON.stringify(r.metrics||{}),JSON.stringify(r.source_status_history||[]),r.verification_basis,r.validation_boundary,r.historical_status,JSON.stringify(r.historical_verdict||''),r.historical_status_group,r.status,r.verification,r.project,r.domain,r.date,r.date_provenance,...(r.tags||[]),...(r.source_paths||[]),...(r.evidence||[]).flatMap(e=>[e.label,e.path,e.source_path,e.excerpt,e.date])].filter(Boolean).join('\n').toLowerCase();}
 function filterRecords(){const q=$('query').value.toLowerCase().trim().split(/\s+/).filter(Boolean);return state.catalog.records.filter(r=>q.every(t=>textOf(r).includes(t))&&(!$('status').value||r.status===$('status').value)&&(!$('domain').value||r.domain===$('domain').value)&&(!$('project').value||r.project===$('project').value)&&(!$('machine').value||(r.origin_machines||[r.machine]).includes($('machine').value))&&(!$('tag').value||(r.tags||[]).includes($('tag').value))&&(!$('kind').value||r.kind===$('kind').value)&&(!$('verification').value||r.verification===$('verification').value)&&(!$('result_verified').value||(r.result_verified===true)===($('result_verified').value==='true')));}
-function card(r){const node=element('article',undefined,'record');node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label','查看 '+r.title);node.append(element('h3',r.title));const meta=element('div',undefined,'meta');meta.append(element('span',r.status,'badge '+r.status),element('span',r.project||'UNCLASSIFIED'),element('span',(r.origin_machines||[r.machine]).join(' · ')),element('span',r.date||'日期未知'));node.append(meta,element('p',r.summary||'暂无摘要'),element('div',(r.tags||[]).join(' · '),'meta'));node.addEventListener('click',()=>details(r));node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();details(r);}});return node;}
-function metrics(){const rs=state.catalog.records;const vals=[['课题 / 结果 / 待核对线索记录',rs.length],['来源已核对记录',state.catalog.statistics?.source_documented_records||0],['历史结果凭据已核对',rs.filter(r=>r.result_verified===true).length],['独立复现结果',state.catalog.statistics?.independently_reproduced_results||0],['失败 / 死路记录',rs.filter(r=>r.kind==='verdict'&&!['SUPPORTED','OPEN'].includes(r.status)).length],['贡献者 / 来源机器',new Set(rs.flatMap(r=>r.origin_machines||[r.machine])).size],['重复 / 版本待审',state.catalog.review_queue?.length||0]];$('metrics').replaceChildren(...vals.map(([k,v])=>{let n=element('div',undefined,'metric');n.append(element('strong',String(v)),element('span',k));return n;}));}
-function render(){if(!state.catalog)return;state.filtered=filterRecords();$('view-title').textContent=titles[state.view];$('results').className=state.view==='timeline'?'timeline':state.view==='inventory'?'inventory':'records';const max=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.view!=='inventory')state.page=Math.min(state.page,max);$('result-count').textContent=state.filtered.length+' 条匹配记录';$('page').textContent=`${state.page} / ${max}`;$('prev').disabled=state.page<=1;$('next').disabled=state.page>=max;const batch=state.filtered.slice((state.page-1)*state.pageSize,state.page*state.pageSize);$('results').replaceChildren();if(state.view==='graph'){renderGraph(batch);return;}if(state.view==='review'){renderReview();return;}if(state.view==='inventory'){renderInventory();return;}if(!batch.length){$('results').append(element('div','没有匹配记录。未采集或未审阅不表示该方向从未研究。','empty'));return;}if(state.view==='timeline'){const sorted=[...state.filtered].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')).slice((state.page-1)*state.pageSize,state.page*state.pageSize);let date;for(const r of sorted){if(date!==r.date){date=r.date;$('results').append(element('div',date||'日期未知','timeline-date'));}$('results').append(card(r));}}else $('results').append(...batch.map(card));}
-function renderReview(){const ids=new Set(state.filtered.map(r=>r.id));const queue=(state.catalog.review_queue||[]).filter(x=>x.record_ids.some(id=>ids.has(id)));if(!queue.length){$('results').append(element('div','当前筛选下没有重复候选。标题相似检索不是科学上的语义去重证明。','empty'));return;}for(const item of queue.slice((state.page-1)*30,state.page*30)){const node=element('article',undefined,'record review-card');node.append(element('h3',item.title_key),element('p',item.action));for(const id of item.record_ids){const r=state.catalog.records.find(r=>r.id===id);if(r){const b=element('button',r.title+' · '+r.status);b.onclick=()=>details(r);node.append(b);}}$('results').append(node);}}
-function renderGraph(batch){const c=state.catalog;const ids=new Set(batch.map(r=>r.id));const problemIds=new Set((c.nodes||[]).filter(n=>ids.has(n.record_id)).map(n=>n.id));let edges=(c.edges||[]).filter(e=>problemIds.has(e.source)||problemIds.has(e.target));let nodeIds=new Set(edges.flatMap(e=>[e.source,e.target]));let nodes=(c.nodes||[]).filter(n=>nodeIds.has(n.id)).slice(0,100);nodeIds=new Set(nodes.map(n=>n.id));edges=edges.filter(e=>nodeIds.has(e.source)&&nodeIds.has(e.target));$('results').append(element('p',`本页 ${nodes.length} 个来源节点 · ${edges.length} 条引用关系。连线是来源与章节关联，不表示因果关系。最多显示 100 个节点；使用筛选缩小范围。`,'graph-note'));const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 1100 620');svg.setAttribute('class','graph-svg');svg.setAttribute('role','img');svg.setAttribute('aria-label','有来源的研究关系图');const kinds=['Research Area','Problem','Hypothesis','Experiment','Evidence','Verdict','Follow-up'];const positions=new Map();for(const kind of kinds){const group=nodes.filter(n=>n.type===kind);group.forEach((n,i)=>positions.set(n.id,{x:70+kinds.indexOf(kind)*155,y:50+(i+.5)*520/Math.max(1,group.length)}));}for(const edge of edges){const a=positions.get(edge.source),b=positions.get(edge.target);if(!a||!b)continue;const line=document.createElementNS(ns,'line');for(const [key,val] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(key,val);const title=document.createElementNS(ns,'title');title.textContent=edge.type+' · '+(edge.provenance||[]).map(p=>p.label).join('; ');line.append(title);svg.append(line);}for(const n of nodes){const p=positions.get(n.id);const g=document.createElementNS(ns,'g');g.classList.add('graph-node');g.setAttribute('tabindex','0');g.setAttribute('role','button');g.setAttribute('aria-label',n.type+': '+n.label);const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x);circle.setAttribute('cy',p.y);circle.setAttribute('r',n.type==='Problem'?7:4);const text=document.createElementNS(ns,'text');text.setAttribute('x',p.x+10);text.setAttribute('y',p.y+4);text.textContent=n.label.slice(0,17);const title=document.createElementNS(ns,'title');title.textContent=n.type+': '+n.label;g.append(circle,text,title);const open=()=>{const r=state.catalog.records.find(r=>r.id===n.record_id)||state.catalog.records.find(r=>r.evidence?.some(e=>n.provenance?.some(p=>p.sha256===e.sha256)));if(r)details(r);};g.onclick=open;g.onkeydown=e=>{if(e.key==='Enter')open();};svg.append(g);}kinds.forEach((kind,i)=>{const label=document.createElementNS(ns,'text');label.setAttribute('x',25+i*155);label.setAttribute('y',20);label.textContent=kind;svg.append(label);});$('results').append(svg);}
+function card(r){const node=element('article',undefined,'record');node.tabIndex=0;node.setAttribute('role','button');node.setAttribute('aria-label',t('view_prefix')+r.title);node.append(element('h3',r.title));const meta=element('div',undefined,'meta');meta.append(element('span',r.status,'badge '+r.status),element('span',r.project||'UNCLASSIFIED'),element('span',(r.origin_machines||[r.machine]).join(' · ')),element('span',r.date||t('date_unknown')));node.append(meta,element('p',r.summary||t('no_summary')),element('div',(r.tags||[]).join(' · '),'meta'));node.addEventListener('click',()=>details(r));node.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();details(r);}});return node;}
+function metrics(){const rs=state.catalog.records;const vals=[[t('m_records'),rs.length],[t('m_sourced'),state.catalog.statistics?.source_documented_records||0],[t('m_receipts'),rs.filter(r=>r.result_verified===true).length],[t('m_indep'),state.catalog.statistics?.independently_reproduced_results||0],[t('m_failures'),rs.filter(r=>r.kind==='verdict'&&!['SUPPORTED','OPEN'].includes(r.status)).length],[t('m_contrib'),new Set(rs.flatMap(r=>r.origin_machines||[r.machine])).size],[t('m_dupes'),state.catalog.review_queue?.length||0]];$('metrics').replaceChildren(...vals.map(([k,v])=>{let n=element('div',undefined,'metric');n.append(element('strong',String(v)),element('span',k));return n;}));}
+function render(){if(!state.catalog)return;state.filtered=filterRecords();$('view-title').textContent=t(titles[state.view]);$('results').className=state.view==='timeline'?'timeline':state.view==='inventory'?'inventory':'records';const max=Math.max(1,Math.ceil(state.filtered.length/state.pageSize));if(state.view!=='inventory')state.page=Math.min(state.page,max);$('result-count').textContent=state.filtered.length+t('n_matching');$('page').textContent=`${state.page} / ${max}`;$('prev').disabled=state.page<=1;$('next').disabled=state.page>=max;const batch=state.filtered.slice((state.page-1)*state.pageSize,state.page*state.pageSize);$('results').replaceChildren();if(state.view==='graph'){renderGraph(batch);return;}if(state.view==='review'){renderReview();return;}if(state.view==='inventory'){renderInventory();return;}if(!batch.length){$('results').append(element('div',t('empty_list'),'empty'));return;}if(state.view==='timeline'){const sorted=[...state.filtered].sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')).slice((state.page-1)*state.pageSize,state.page*state.pageSize);let date;for(const r of sorted){if(date!==r.date){date=r.date;$('results').append(element('div',date||t('date_unknown'),'timeline-date'));}$('results').append(card(r));}}else $('results').append(...batch.map(card));}
+function renderReview(){const ids=new Set(state.filtered.map(r=>r.id));const queue=(state.catalog.review_queue||[]).filter(x=>x.record_ids.some(id=>ids.has(id)));if(!queue.length){$('results').append(element('div',t('empty_review'),'empty'));return;}for(const item of queue.slice((state.page-1)*30,state.page*30)){const node=element('article',undefined,'record review-card');node.append(element('h3',item.title_key),element('p',item.action));for(const id of item.record_ids){const r=state.catalog.records.find(r=>r.id===id);if(r){const b=element('button',r.title+' · '+r.status);b.onclick=()=>details(r);node.append(b);}}$('results').append(node);}}
+function renderGraph(batch){const c=state.catalog;const ids=new Set(batch.map(r=>r.id));const problemIds=new Set((c.nodes||[]).filter(n=>ids.has(n.record_id)).map(n=>n.id));let edges=(c.edges||[]).filter(e=>problemIds.has(e.source)||problemIds.has(e.target));let nodeIds=new Set(edges.flatMap(e=>[e.source,e.target]));let nodes=(c.nodes||[]).filter(n=>nodeIds.has(n.id)).slice(0,100);nodeIds=new Set(nodes.map(n=>n.id));edges=edges.filter(e=>nodeIds.has(e.source)&&nodeIds.has(e.target));$('results').append(element('p',t('graph_note',{n:nodes.length,e:edges.length}),'graph-note'));const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 1100 620');svg.setAttribute('class','graph-svg');svg.setAttribute('role','img');svg.setAttribute('aria-label',t('graph_aria'));const kinds=['Research Area','Problem','Hypothesis','Experiment','Evidence','Verdict','Follow-up'];const positions=new Map();for(const kind of kinds){const group=nodes.filter(n=>n.type===kind);group.forEach((n,i)=>positions.set(n.id,{x:70+kinds.indexOf(kind)*155,y:50+(i+.5)*520/Math.max(1,group.length)}));}for(const edge of edges){const a=positions.get(edge.source),b=positions.get(edge.target);if(!a||!b)continue;const line=document.createElementNS(ns,'line');for(const [key,val] of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y}))line.setAttribute(key,val);const title=document.createElementNS(ns,'title');title.textContent=edge.type+' · '+(edge.provenance||[]).map(p=>p.label).join('; ');line.append(title);svg.append(line);}for(const n of nodes){const p=positions.get(n.id);const g=document.createElementNS(ns,'g');g.classList.add('graph-node');g.setAttribute('tabindex','0');g.setAttribute('role','button');g.setAttribute('aria-label',n.type+': '+n.label);const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x);circle.setAttribute('cy',p.y);circle.setAttribute('r',n.type==='Problem'?7:4);const text=document.createElementNS(ns,'text');text.setAttribute('x',p.x+10);text.setAttribute('y',p.y+4);text.textContent=n.label.slice(0,17);const title=document.createElementNS(ns,'title');title.textContent=n.type+': '+n.label;g.append(circle,text,title);const open=()=>{const r=state.catalog.records.find(r=>r.id===n.record_id)||state.catalog.records.find(r=>r.evidence?.some(e=>n.provenance?.some(p=>p.sha256===e.sha256)));if(r)details(r);};g.onclick=open;g.onkeydown=e=>{if(e.key==='Enter')open();};svg.append(g);}kinds.forEach((kind,i)=>{const label=document.createElementNS(ns,'text');label.setAttribute('x',25+i*155);label.setAttribute('y',20);label.textContent=kind;svg.append(label);});$('results').append(svg);}
 
 function renderInventory() {
   // Derive source references in browser memory. Never send a private query to a public /api endpoint.
@@ -19,12 +304,12 @@ function renderInventory() {
     const machine = (record.origin_machines || [record.machine || 'UNKNOWN']).join(', ');
     for (const ev of record.evidence || []) {
       if (!ev || typeof ev !== 'object') continue;
-      const path = String(ev.source_path || ev.path || ev.label || '未命名来源');
+      const path = String(ev.source_path || ev.path || ev.label || t('unnamed_source'));
       const sha = String(ev.sha256 || '');
       const key = [machine,path,sha].join('\u0000');
       if (!entries.has(key)) entries.set(key,{
         machine, path, sha, count:0, bytes:ev.source_bytes || null,
-        verification:ev.excerpt ? '附有来源摘录' : '仅有来源定位'
+        verification:ev.excerpt ? t('has_excerpt') : t('locator_only')
       });
       entries.get(key).count++;
     }
@@ -34,29 +319,29 @@ function renderInventory() {
   const limit = 30;
   const max = Math.max(1,Math.ceil(total/limit));
   state.page = Math.min(state.page,max);
-  $('result-count').textContent = total + ' 个已引用的来源位置';
+  $('result-count').textContent = total + t('n_cited');
   $('page').textContent = `${state.page} / ${max}`;
   $('prev').disabled = state.page <= 1;
   $('next').disabled = state.page >= max;
-  const note = element('p','当前表仅根据已导入的轻量目录生成，不等同全机器文件覆盖清单。不会发送查询、路径或记录 ID 到服务器。','graph-note');
+  const note = element('p',t('inv_note'),'graph-note');
   if (!total) {
-    $('results').replaceChildren(note,element('div','此目录没有可显示的来源证据定位。','empty'));
+    $('results').replaceChildren(note,element('div',t('inv_empty'),'empty'));
     return;
   }
   const table = element('table');
   const head = element('tr');
-  for (const label of ['引用来源路径','机器','SHA-256','被引用次数 / 证据范围']) head.append(element('th',label));
+  for (const label of [t('th_path'),t('th_machine'),'SHA-256',t('th_count')]) head.append(element('th',label));
   table.append(head);
   for (const entry of rows.slice((state.page-1)*limit,state.page*limit)) {
     const row = element('tr');
     row.append(element('td',entry.path),element('td',entry.machine),
-      element('td',entry.sha || '未提供'),
-      element('td',entry.count+' 次 · '+entry.verification));
+      element('td',entry.sha || t('not_provided')),
+      element('td',entry.count+t('times_sep')+entry.verification));
     table.append(row);
   }
   $('results').replaceChildren(note,table);
 }
-function details(r){const body=$('details-body');body.replaceChildren(element('h2',r.title),element('p',`${r.status} · ${r.verification} · ${r.project} · ${(r.origin_machines||[r.machine]).join(', ')}`,'detail-meta'),element('p',`${r.date||'日期未知'} — ${r.date_provenance||'UNSPECIFIED'}`,'detail-meta'),element('p',r.scope||'适用范围未审阅','scope'),element('h3','来源内容摘要'),element('pre',r.summary||'暂无摘要'),element('h3','验证依据与来源定位'));for(const [i,ev] of (r.evidence||[]).entries()){const box=element('div',undefined,'evidence-row');box.append(element('div',ev.label),element('code','SHA-256 '+(ev.sha256||'未提供')),element('div',[ev.archive,ev.member].filter(Boolean).join(' :: ')));box.append(element('div',[ev.path||ev.label,ev.line_start?'行 '+ev.line_start+(ev.line_end?'–'+ev.line_end:''):''].filter(Boolean).join(' · ')));if(ev.excerpt)box.append(element('pre',ev.excerpt));if(ev.archive&&ev.member&&isLoopbackOrigin()&&!String(state.catalog.archive_scope||'').startsWith('COMPACT_KNOWLEDGE_ONLY')){const btn=element('button','校验并预览原始文本');btn.onclick=async()=>{btn.disabled=true;try{const response=await fetch('/api/evidence?'+new URLSearchParams({record:r.id,index:String(i)}));const data=await response.json();if(!response.ok)throw new Error(data.error);box.append(element('pre',data.content+(data.truncated?'\n[预览截断；请从私有归档恢复完整原件]':'')));btn.textContent='SHA-256 已验证';}catch(e){box.append(element('div',e.message,'error'));btn.disabled=false;}};box.append(btn);}else if(ev.url&&/^https:\/\//.test(ev.url)){const a=element('a','公开来源');a.href=ev.url;a.rel='noopener noreferrer';a.target='_blank';box.append(a);}body.append(box);}if(r.source_ids?.length)body.append(element('p','源机器记录 ID：'+r.source_ids.join(' · '),'detail-meta'));if(r.historical_verdict||r.historical_status_group)body.append(element('h3','对端历史判断（原文待核对，不自动提升当前状态）'),element('pre',JSON.stringify({historical_verdict:r.historical_verdict,historical_status_group:r.historical_status_group},null,2)));if(r.source_status_history?.length)body.append(element('h3','历史状态（来源记载，不自动判定冲突）'),element('pre',JSON.stringify(r.source_status_history,null,2)));body.append(element('p',r.result_verified===true?'历史结果凭据已核对；以声明的校验范围为准，不代表独立科学复现':'历史结果凭据尚未核对或未提供','detail-meta'));if(r.contributor){const c=r.contributor;body.append(element('p','贡献者：'+c.name+(c.kind==='agent'?' · agent'+(c.model?' ('+c.model+')':'')+(c.operator?' · 负责人 '+c.operator:''):' · human'),'detail-meta'));}if(r.cause)body.append(element('h3','原因（证据所示范围内）'),element('p',r.cause));if(r.experiment&&typeof r.experiment==='string')body.append(element('h3','实验设置'),element('p',r.experiment));if(r.repro)body.append(element('h3','CI 复现命令'),element('pre',r.repro.command+'\n期望：'+(r.repro.expect||[]).map(x=>x.metric+' '+x.op+' '+x.value).join('; ')));if(r.reproductions?.length)body.append(element('h3','独立复现记录'),element('pre',JSON.stringify(r.reproductions,null,2)));if(r.follow_up&&typeof r.follow_up==='string')body.append(element('h3','后续'),element('p',r.follow_up));if(r.ledger_path)body.append(element('p','账本文件：'+r.ledger_path+' · '+(r.license||'CC-BY-4.0'),'detail-meta'));if(r.hypothesis)body.append(element('h3','研究假设'),element('p',typeof r.hypothesis==='string'?r.hypothesis:JSON.stringify(r.hypothesis)));if(r.result_summary||r.metrics)body.append(element('h3','已记载结果 / 指标'),element('pre',[r.result_summary,JSON.stringify(r.metrics||{},null,2)].filter(Boolean).join('\n')));if(r.validation_boundary)body.append(element('h3','证据有效性边界'),element('p',r.validation_boundary));if(r.experiment_status)body.append(element('p','实验状态：'+r.experiment_status,'detail-meta'));if(r.result_kind)body.append(element('p','结果类型：'+r.result_kind,'detail-meta'));if(r.verification_basis)body.append(element('h3','验证边界 / 对端校验记载'),element(typeof r.verification_basis==='string'?'p':'pre',typeof r.verification_basis==='string'?r.verification_basis:JSON.stringify(r.verification_basis,null,2)));if(r.verified_result_scope)body.append(element('h3','已核对结果的限定范围'),element(typeof r.verified_result_scope==='string'?'p':'pre',typeof r.verified_result_scope==='string'?r.verified_result_scope:JSON.stringify(r.verified_result_scope,null,2)));const nodes=(state.catalog.nodes||[]).filter(n=>n.record_id===r.id);body.append(element('h3','问题 → 假设 → 实验 → 证据 → 判断 → 后续'));for(const node of nodes)body.append(element('p',`${node.type} · ${node.label} · ${node.verification||'SOURCE_POINTER'}`,'detail-meta'));body.append(element('h3','已发现的状态词（待审阅）'),element('p',(r.reported_status_hints||[]).join(', ')||'未提取状态词','detail-meta'));$('details').showModal();}
+function details(r){const body=$('details-body');body.replaceChildren(element('h2',r.title),element('p',`${r.status} · ${r.verification} · ${r.project} · ${(r.origin_machines||[r.machine]).join(', ')}`,'detail-meta'),element('p',`${r.date||t('date_unknown')} — ${r.date_provenance||'UNSPECIFIED'}`,'detail-meta'),element('p',r.scope||t('scope_unreviewed'),'scope'),element('h3',t('h_summary')),element('pre',r.summary||t('no_summary')),element('h3',t('h_evidence')));for(const [i,ev] of (r.evidence||[]).entries()){const box=element('div',undefined,'evidence-row');box.append(element('div',ev.label),element('code','SHA-256 '+(ev.sha256||t('not_provided'))),element('div',[ev.archive,ev.member].filter(Boolean).join(' :: ')));box.append(element('div',[ev.path||ev.label,ev.line_start?t('lines_prefix')+ev.line_start+(ev.line_end?'–'+ev.line_end:''):''].filter(Boolean).join(' · ')));if(ev.excerpt)box.append(element('pre',ev.excerpt));if(ev.archive&&ev.member&&isLoopbackOrigin()&&!String(state.catalog.archive_scope||'').startsWith('COMPACT_KNOWLEDGE_ONLY')){const btn=element('button',t('btn_preview'));btn.onclick=async()=>{btn.disabled=true;try{const response=await fetch('/api/evidence?'+new URLSearchParams({record:r.id,index:String(i)}));const data=await response.json();if(!response.ok)throw new Error(data.error);box.append(element('pre',data.content+(data.truncated?t('preview_truncated'):'')));btn.textContent=t('sha_verified');}catch(e){box.append(element('div',e.message,'error'));btn.disabled=false;}};box.append(btn);}else if(ev.url&&/^https:\/\//.test(ev.url)){const a=element('a',t('public_source'));a.href=ev.url;a.rel='noopener noreferrer';a.target='_blank';box.append(a);}body.append(box);}if(r.source_ids?.length)body.append(element('p',t('source_ids')+r.source_ids.join(' · '),'detail-meta'));if(r.historical_verdict||r.historical_status_group)body.append(element('h3',t('h_peer')),element('pre',JSON.stringify({historical_verdict:r.historical_verdict,historical_status_group:r.historical_status_group},null,2)));if(r.source_status_history?.length)body.append(element('h3',t('h_history')),element('pre',JSON.stringify(r.source_status_history,null,2)));body.append(element('p',r.result_verified===true?t('receipt_yes'):t('receipt_no'),'detail-meta'));if(r.contributor){const c=r.contributor;body.append(element('p',t('contributor')+c.name+(c.kind==='agent'?' · agent'+(c.model?' ('+c.model+')':'')+(c.operator?t('operator')+c.operator:''):' · human'),'detail-meta'));}if(r.cause)body.append(element('h3',t('h_cause')),element('p',r.cause));if(r.experiment&&typeof r.experiment==='string')body.append(element('h3',t('h_setup')),element('p',r.experiment));if(r.repro)body.append(element('h3',t('h_repro')),element('pre',r.repro.command+t('expect')+(r.repro.expect||[]).map(x=>x.metric+' '+x.op+' '+x.value).join('; ')));if(r.reproductions?.length)body.append(element('h3',t('h_reproductions')),element('pre',JSON.stringify(r.reproductions,null,2)));if(r.follow_up&&typeof r.follow_up==='string')body.append(element('h3',t('h_followup')),element('p',r.follow_up));if(r.ledger_path)body.append(element('p',t('ledger_file')+r.ledger_path+' · '+(r.license||'CC-BY-4.0'),'detail-meta'));if(r.hypothesis)body.append(element('h3',t('h_hypothesis')),element('p',typeof r.hypothesis==='string'?r.hypothesis:JSON.stringify(r.hypothesis)));if(r.result_summary||r.metrics)body.append(element('h3',t('h_results')),element('pre',[r.result_summary,JSON.stringify(r.metrics||{},null,2)].filter(Boolean).join('\n')));if(r.validation_boundary)body.append(element('h3',t('h_boundary')),element('p',r.validation_boundary));if(r.experiment_status)body.append(element('p',t('exp_status')+r.experiment_status,'detail-meta'));if(r.result_kind)body.append(element('p',t('result_kind')+r.result_kind,'detail-meta'));if(r.verification_basis)body.append(element('h3',t('h_basis')),element(typeof r.verification_basis==='string'?'p':'pre',typeof r.verification_basis==='string'?r.verification_basis:JSON.stringify(r.verification_basis,null,2)));if(r.verified_result_scope)body.append(element('h3',t('h_vscope')),element(typeof r.verified_result_scope==='string'?'p':'pre',typeof r.verified_result_scope==='string'?r.verified_result_scope:JSON.stringify(r.verified_result_scope,null,2)));const nodes=(state.catalog.nodes||[]).filter(n=>n.record_id===r.id);body.append(element('h3',t('h_chain')));for(const node of nodes)body.append(element('p',`${node.type} · ${node.label} · ${node.verification||'SOURCE_POINTER'}`,'detail-meta'));body.append(element('h3',t('h_hints')),element('p',(r.reported_status_hints||[]).join(', ')||t('no_hints'),'detail-meta'));$('details').showModal();}
 
 /* Private catalogs are parsed from a user-selected file only. Nothing is sent to the server,
    placed in URL parameters, or saved in localStorage, IndexedDB or cookies. */
@@ -70,17 +355,17 @@ function secureOrigin() {
   return loc.protocol === 'https:' || (loc.protocol === 'http:' && ['localhost','127.0.0.1','[::1]'].includes(loc.hostname));
 }
 function validateCatalog(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('请选择有效的研究地图 JSON 对象');
-  if (input.schema_version !== 'atlas-catalog-v0.2') throw new Error('目录版本不兼容：需要 atlas-catalog-v0.2 的 merged.json，而不是原始归档 ZIP 或源清单');
-  for (const key of ['records','nodes','edges']) if (!Array.isArray(input[key])) throw new Error('目录缺少数组字段：'+key);
-  if (input.records.length > 100000 || input.nodes.length > 500000 || input.edges.length > 1000000) throw new Error('目录记录量超出本地浏览器安全上限');
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error(t('err_object'));
+  if (input.schema_version !== 'atlas-catalog-v0.2') throw new Error(t('err_version'));
+  for (const key of ['records','nodes','edges']) if (!Array.isArray(input[key])) throw new Error(t('err_array')+key);
+  if (input.records.length > 100000 || input.nodes.length > 500000 || input.edges.length > 1000000) throw new Error(t('err_size'));
   for (const [index, r] of input.records.entries()) {
     if (!r || typeof r !== 'object' || typeof r.id !== 'string' || typeof r.title !== 'string' || typeof r.status !== 'string') {
-      throw new Error('研究记录字段不完整，位置：'+index);
+      throw new Error(t('err_record')+index);
     }
-    if (r.evidence !== undefined && !Array.isArray(r.evidence)) throw new Error('研究记录的 evidence 必须是数组，位置：'+index);
+    if (r.evidence !== undefined && !Array.isArray(r.evidence)) throw new Error(t('err_evidence')+index);
   }
-  if (input.review_queue !== undefined && !Array.isArray(input.review_queue)) throw new Error('review_queue 必须是数组');
+  if (input.review_queue !== undefined && !Array.isArray(input.review_queue)) throw new Error(t('err_queue'));
   return input;
 }
 function setCatalog(input, privateLoaded, fileName) {
@@ -108,21 +393,28 @@ function setCatalog(input, privateLoaded, fileName) {
   }
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active',b.dataset.view==='list'));
   const count = catalog.records.length;
-  $('private-status').dataset.mode = privateLoaded ? 'private' : 'public';
-  $('private-status').textContent = privateLoaded
-    ? `已在本机内存打开 ${fileName || '私有目录'} · ${count} 条来源记录。没有上传、持久化或科学有效性升级。`
-    : (count ? `公开判决账本 · ${count} 条记录（CC BY 4.0）。选择本地 merged.json 可临时切换为私有地图，只在内存中，不上传。` : '公开界面使用空目录。选择可信的本地 merged.json 即可临时打开私有地图。');
-  $('clear-private').disabled = !privateLoaded;
-  $('load-state').classList.remove('error');
-  $('load-state').textContent = `${privateLoaded ? '已加载本地私有目录' : (count ? '公开判决账本' : '公开空目录')} · ${catalog.generated_utc || '生成时间未知'} · ${count} 条来源记录 · ${(catalog.index_errors||[]).length} 个索引错误`;
+  state.fileName = fileName || '';
+  refreshStatus();
   metrics();
   render();
 }
+
+function refreshStatus() {
+  if (!state.catalog) return;
+  const catalog = state.catalog, count = catalog.records.length, privateLoaded = state.privateLoaded;
+  $('private-status').dataset.mode = privateLoaded ? 'private' : 'public';
+  $('private-status').textContent = privateLoaded
+    ? t('status_private',{file:state.fileName || t('private_dir'),n:count})
+    : (count ? t('status_public',{n:count}) : t('status_empty'));
+  $('clear-private').disabled = !privateLoaded;
+  $('load-state').classList.remove('error');
+  $('load-state').textContent = t('load_state',{mode:privateLoaded ? t('mode_private') : (count ? t('mode_public') : t('mode_empty')),time:catalog.generated_utc || t('gen_unknown'),n:count,e:(catalog.index_errors||[]).length});
+}
 async function importPrivateFile(file) {
   if (!file) return false;
-  if (!secureOrigin()) throw new Error('当前网页不是 HTTPS 或 localhost。拒绝读取私有文件，请通过安全的 HTTPS 网址打开网站');
-  if (!/\.json$/i.test(file.name || '')) throw new Error('请选择生成后的 merged.json 文件，不支持 ZIP 或其他格式');
-  if (!Number.isFinite(file.size) || file.size < 2 || file.size > MAX_PRIVATE_CATALOG_BYTES) throw new Error('JSON 文件大小不合法或超过 64 MiB 限制');
+  if (!secureOrigin()) throw new Error(t('err_https'));
+  if (!/\.json$/i.test(file.name || '')) throw new Error(t('err_ext'));
+  if (!Number.isFinite(file.size) || file.size < 2 || file.size > MAX_PRIVATE_CATALOG_BYTES) throw new Error(t('err_filesize'));
   const parsed = JSON.parse(await file.text());
   setCatalog(parsed,true,file.name);
   return true;
@@ -134,7 +426,7 @@ async function onPrivateFileChange(event) {
     await importPrivateFile(file);
   } catch (error) {
     $('private-status').dataset.mode = 'error';
-    $('private-status').textContent = '导入失败：'+error.message+'。已有地图保持不变。';
+    $('private-status').textContent = t('import_failed')+error.message+t('import_kept');
   } finally {
     input.value = '';
   }
@@ -147,16 +439,16 @@ function clearPrivateCatalog() {
 async function init() {
   try {
     const response = await fetch('data/merged.json',{cache:'no-store'});
-    if (!response.ok) throw new Error('找不到默认目录；请先运行本地构建或打开已部署的 Pages');
+    if (!response.ok) throw new Error(t('err_default'));
     const catalog = validateCatalog(await response.json());
     // The public site ships an empty default catalog. Local servers may serve private data.
     // Public ledger catalogs (and empty ones) are safe to keep as the reset target; a locally served private catalog is not.
     const isPublic = String(catalog.data_policy || '').startsWith('PUBLIC_') || catalog.records.length === 0;
     state.publicCatalog = isPublic ? catalog : {...catalog,records:[],nodes:[],edges:[],review_queue:[],source_archives:{}};
-    setCatalog(catalog,!isPublic,!isPublic ? '本机服务提供的目录' : '');
+    setCatalog(catalog,!isPublic,!isPublic ? t('local_served') : '');
   } catch (error) {
     $('load-state').textContent = error.message;
     $('load-state').classList.add('error');
   }
 }
-for(const id of ['query','domain','project','status','machine','tag','kind','verification','result_verified'])$(id).addEventListener(id==='query'?'input':'change',()=>{state.page=1;render();});document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.page=1;document.querySelectorAll('nav button').forEach(n=>n.classList.toggle('active',n===b));render();});$('prev').onclick=()=>{state.page--;render();};$('next').onclick=()=>{state.page++;render();};$('close').onclick=()=>$('details').close();$('private-file').addEventListener('change',onPrivateFileChange);$('clear-private').onclick=clearPrivateCatalog;$('export').onclick=()=>{const blob=new Blob([JSON.stringify({schema_version:state.catalog.schema_version,data_policy:'PRIVATE_LOCAL_DERIVED',records:state.filtered},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=element('a');a.href=url;a.download='research-atlas-filtered-private.json';a.click();URL.revokeObjectURL(url);};init();
+for(const id of ['query','domain','project','status','machine','tag','kind','verification','result_verified'])$(id).addEventListener(id==='query'?'input':'change',()=>{state.page=1;render();});document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.page=1;document.querySelectorAll('nav button').forEach(n=>n.classList.toggle('active',n===b));render();});$('prev').onclick=()=>{state.page--;render();};$('next').onclick=()=>{state.page++;render();};$('close').onclick=()=>$('details').close();$('private-file').addEventListener('change',onPrivateFileChange);$('clear-private').onclick=clearPrivateCatalog;$('export').onclick=()=>{const blob=new Blob([JSON.stringify({schema_version:state.catalog.schema_version,data_policy:'PRIVATE_LOCAL_DERIVED',records:state.filtered},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=element('a');a.href=url;a.download='research-atlas-filtered-private.json';a.click();URL.revokeObjectURL(url);};if(document.getElementById('lang-toggle'))$('lang-toggle').onclick=()=>setLang(LANG==='en'?'zh':'en');applyI18n();init();

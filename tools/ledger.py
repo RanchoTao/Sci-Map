@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Research Atlas verdict ledger: validate, search, build, reproduce, import.
+"""Sci-Map verdict ledger: validate, search, build, reproduce, import.
 
 One JSON file per tested hypothesis lives under ledger/<domain>/<id>.json.
 Failures are first-class records. Nothing here upgrades a record's evidence
@@ -274,7 +274,7 @@ def build(ledgers, private=False):
     paths = {r['id']: _rel(p) for p, r, err in load(ledgers) if r and not err}
     catalog = {
         'schema_version': 'atlas-catalog-v0.2',
-        'project': 'Research Atlas verdict ledger',
+        'project': 'Sci-Map verdict ledger',
         'data_policy': 'PRIVATE_LOCAL_LEDGER' if private else 'PUBLIC_LEDGER_CC_BY_4_0',
         'archive_scope': 'VERDICT_LEDGER',
         'generated_utc': dt.datetime.now(dt.timezone.utc).isoformat(),

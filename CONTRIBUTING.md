@@ -1,4 +1,4 @@
-# Contributing to Research Atlas
+# Contributing to Sci-Map
 
 Every tested hypothesis is welcome, especially the ones that failed. One pull request can add one or many records.
 

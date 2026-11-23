@@ -13,7 +13,7 @@
   "scope": "Only f(x)=x^2 with plain gradient descent and lr = 2.5. Says nothing about lr <= 1 or about other objectives.",
   "cause": "The update multiplies x by (1 - 2*lr) = -4; any lr > 1 makes |1 - 2*lr| > 1, so iterates diverge.",
   "evidence_level": "CI_REPRODUCED",
-  "contributor": {"name": "Research Atlas maintainers", "kind": "human"},
+  "contributor": {"name": "Sci-Map maintainers", "kind": "human"},
   "date": "2026-11-23",
   "evidence": [{"label": "Reproduction script", "path": "examples/repro/gd_quadratic.py"}],
   "repro": {

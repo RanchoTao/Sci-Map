@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Loopback-only Research Atlas server. Evidence ZIPs are never static routes."""
+"""Loopback-only Sci-Map server. Evidence ZIPs are never static routes."""
 import argparse
 import hashlib
 import json
@@ -114,5 +114,5 @@ if __name__ == '__main__':
     p.add_argument('--enable-raw-preview', action='store_true', help='Explicitly enable manifest-authorized bounded text previews')
     a = p.parse_args()
     server = ThreadingHTTPServer(('127.0.0.1', a.port), make_handler(a.site, a.evidence_dir, a.manifest, a.enable_raw_preview))
-    print(f'Research Atlas http://127.0.0.1:{a.port} (loopback only)', flush=True)
+    print(f'Sci-Map http://127.0.0.1:{a.port} (loopback only)', flush=True)
     server.serve_forever()

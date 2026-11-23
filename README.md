@@ -1,17 +1,23 @@
-# Research Atlas
+# Sci-Map
 
-**A public, git-native ledger of tested research hypotheses and their scoped verdicts. Failures count as contributions.**
+**Make AI-driven research auditable by humans.** Sci-Map turns the hundreds of experiments an autoresearch system runs overnight into a map a person can read in minutes: what was tried, what died and why, what still stands, and which conclusions deserve a second look.
 
-> 开跑之前，先查这个方向有没有人试过、在什么条件下失败。Research Atlas 把每一个被检验过的研究假设记成一条带出处、带适用范围、带证据等级的判决记录，人和 AI agent 都可以通过 GitHub PR 贡献。失败也是贡献。
+> 让人能看懂、能审计 AI 做的研究。AI 一夜能跑几百个实验，人却读不完日志。Sci-Map 把每个被检验过的假设变成一条带适用范围、带证据等级的判决，再画成一张人能快速扫过的地图：哪些方向已经死了、为什么死、哪些还活着、哪些结论最值得复查。失败也是贡献。
 
-AutoResearch systems such as [karpathy/autoresearch](https://github.com/karpathy/autoresearch), [AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) and their distributed forks run hundreds of experiments overnight. Most of those experiments fail, and the failures stay in local logs. The next agent, in the next lab, walks into the same dead end. Recent work shows that a shared bank of structured failures makes AutoResearch agents better and cheaper ([Negative Knowledge as Failure-aware Shared Memory for AutoResearch](https://arxiv.org/abs/2606.21024)). Research Atlas is that bank as public infrastructure:
+## Why
 
-- **Domain-agnostic.** It isn't tied to one benchmark metric. Any field whose hypotheses can be stated and tested is in scope.
-- **Verdicts, not just scores.** A record distinguishes `KILLED_IN_SCOPE`, `IMPLEMENTATION_FAILED`, `LITERATURE_COLLISION`, `INVALIDATED`, `RESOURCE_LIMITED`, `INCONCLUSIVE`, `SUPPORTED` and `OPEN`. A broken implementation is not evidence that an idea is wrong, and the ledger keeps the two apart.
-- **Scope is mandatory.** Every verdict says under which conditions it holds. A kill at 10M parameters says nothing about 10B unless someone tests it.
-- **Graded evidence.** `CLAIMED → SOURCE_DOCUMENTED → ARTIFACT_LINKED → CI_REPRODUCED → INDEPENDENTLY_REPRODUCED`. Cheap claims can carry a CPU-only repro command, and CI re-runs it on every PR.
-- **Git is the database.** One JSON file per record under `ledger/<domain>/<id>.json`. History, review, forks and offline copies come from git.
-- **Agents are first-class contributors**, always with a responsible human operator.
+Autoresearch systems such as [karpathy/autoresearch](https://github.com/karpathy/autoresearch) and [AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) now produce results faster than anyone can review them. The bottleneck has moved from running experiments to *understanding and trusting* them. Reading raw logs or generated papers doesn't scale, and most failures never leave the machine they ran on, so the next agent walks into the same dead end ([recent work](https://arxiv.org/abs/2606.21024) shows that sharing structured failures makes agents better and cheaper).
+
+Sci-Map takes a cognitive-load-first approach to this oversight problem:
+
+- **Small, structured units.** Every result becomes one verdict: hypothesis, scope, verdict, cause, evidence. You review claims, not transcripts.
+- **Verdicts that keep distinctions humans care about.** `KILLED_IN_SCOPE` is not `IMPLEMENTATION_FAILED`; a literature collision is not a negative result; `INCONCLUSIVE` stays inconclusive.
+- **Scope is mandatory.** A kill at 10M parameters says nothing about 10B unless someone tests it.
+- **Evidence strength is visible.** `CLAIMED → SOURCE_DOCUMENTED → ARTIFACT_LINKED → CI_REPRODUCED → INDEPENDENTLY_REPRODUCED`. Cheap claims carry a repro command that CI re-runs.
+- **A map, not a log.** Records are linked into `Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up` and browsed visually, so the state of a research direction is visible at a glance.
+- **Git is the database.** One JSON file per record under `ledger/<domain>/<id>.json`; review, history and forks come from git. Humans and agents both contribute, and an agent always names a responsible human operator.
+
+The interface is under active redesign around audit workflows: what changed since you last looked, ten-second audit cards, and highlighting weakly supported verdicts that block large parts of the map.
 
 ## Use it before you run an experiment
 
@@ -65,9 +71,9 @@ The original archive importer (`build_index.py`, `pipeline.py`) still builds a p
 - An empty region of the map is a gap in what has been recorded, not a novelty claim. Check the literature before treating it as unexplored.
 - Possible duplicates are flagged for review, never silently merged.
 
-## Data and licenses
+## Licenses
 
-Ledger records are contributed under CC BY 4.0 unless a record states otherwise. Python 3.10+, standard library only; the web UI has no external dependencies, telemetry or remote scripts.
+Code: [MIT](LICENSE). Ledger data: [CC BY 4.0](ledger/LICENSE.md) unless a record states otherwise. Python 3.10+, standard library only; the web UI has no external dependencies, telemetry or remote scripts. To cite Sci-Map, see [CITATION.cff](CITATION.cff).
 
 ## Related work
 
@@ -77,4 +83,4 @@ Ledger records are contributed under CC BY 4.0 unless a record states otherwise.
 - alphaXiv AI track, "A Society of AI Scientists": an agent preprint server with a claim ledger
 - autoresearch@home, Hyperspace AGI: distributed AutoResearch that shares best results within a single benchmark
 
-Research Atlas aims to sit beneath systems like these as the shared, cross-project record of what was tried and what happened.
+Sci-Map aims to sit beside systems like these as the human-facing layer: a shared, auditable record of what was tried and what happened.

@@ -1,4 +1,4 @@
-name: Deploy public Research Atlas to GitHub Pages
+name: Deploy public Sci-Map to GitHub Pages
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: research-atlas-pages-v2
+  group: sci-map-pages-v3
   cancel-in-progress: true
 
 jobs:
@@ -54,19 +54,7 @@ jobs:
           for name in ("style.css", "app.js"):
               (out / name).write_bytes((src / name).read_bytes())
 
-          index = (src / "index.html").read_text(encoding="utf-8")
-          index = index.replace("Research Atlas · 私有科研地图", "Research Atlas · 公共失败与判决地图")
-          index = index.replace("PRIVATE · LOCAL", "PUBLIC LEDGER · CC BY 4.0")
-          index = index.replace(
-              "轻量目录保留课题与结果、依据摘录及来源哈希。原始流程和实验数据不迁移。来源记载与独立复现分开标注。",
-              "公开账本记录被检验过的研究假设及其限定范围内的判决。失败也是贡献：查过再跑，别重复别人的死路。通过 GitHub PR 贡献。"
-          )
-          index = index.replace(
-              "检索问题、假设、失败条件与结果依据。来源记载不等同独立复现。",
-              "开跑之前，先查这个方向有没有人试过、在什么条件下失败。来源记载、CI 复现与独立复现分开标注。"
-          )
-          index = index.replace("来源清单</button>", "来源清单（需本地服务）</button>")
-          (out / "index.html").write_text(index, encoding="utf-8")
+          (out / "index.html").write_bytes((src / "index.html").read_bytes())
 
           catalog = json.loads(Path("_public_catalog.json").read_text(encoding="utf-8"))
           assert catalog["data_policy"] == "PUBLIC_LEDGER_CC_BY_4_0"

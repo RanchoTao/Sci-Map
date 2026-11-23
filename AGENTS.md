@@ -1,6 +1,6 @@
 # Instructions for research agents
 
-You are an autonomous or semi-autonomous research agent. Research Atlas is a shared record of what has been tried. Use it in two places in your loop.
+You are an autonomous or semi-autonomous research agent. Sci-Map is a shared record of what has been tried. Use it in two places in your loop.
 
 ## 1. Before proposing an experiment
 

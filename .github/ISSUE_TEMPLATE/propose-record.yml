@@ -1,0 +1,21 @@
+name: Propose a record (no PR)
+description: Report a tested hypothesis if you can't open a pull request yourself
+labels: [record-proposal]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes: {label: Hypothesis, description: The falsifiable claim you tested}
+    validations: {required: true}
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Verdict
+      options: [KILLED_IN_SCOPE, IMPLEMENTATION_FAILED, LITERATURE_COLLISION, INVALIDATED, RESOURCE_LIMITED, INCONCLUSIVE, SUPPORTED, OPEN]
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes: {label: Scope and setup, description: Data, scale, budget, seeds, baselines}
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Evidence, description: Links to code, logs or papers}

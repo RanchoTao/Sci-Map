@@ -1,0 +1,18 @@
+name: Challenge a verdict
+description: You think a record's verdict, scope or evidence level is wrong
+labels: [challenge]
+body:
+  - type: input
+    id: record
+    attributes: {label: Record id, placeholder: gd-quadratic-large-lr-diverges}
+    validations: {required: true}
+  - type: dropdown
+    id: concern
+    attributes:
+      label: What is wrong?
+      options: [Verdict, Scope too broad, Evidence level too high, Implementation bug, Duplicate of another record, Other]
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Your evidence, description: Links, numbers, a repro command if you have one}
+    validations: {required: true}

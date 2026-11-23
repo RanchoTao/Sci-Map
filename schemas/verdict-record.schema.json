@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/RanchoTao/Sci-Map/schemas/verdict-record.schema.json",
-  "title": "Research Atlas verdict record v1",
+  "title": "Sci-Map verdict record v1",
   "description": "One tested research hypothesis and its scoped verdict. Failures are first-class contributions. tools/ledger.py validate is the authoritative checker; this file documents the shape for other tools.",
   "type": "object",
   "required": ["schema", "id", "title", "domain", "hypothesis", "verdict", "scope", "evidence_level", "contributor", "date", "evidence"],
