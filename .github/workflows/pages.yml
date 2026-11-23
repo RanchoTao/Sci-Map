@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "ledger/**"
+      - "tools/**"
+      - "build_index.py"
       - "tests/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -32,65 +35,48 @@ jobs:
           python -m unittest discover -s tests -v
           node tests/test_search.cjs
           node tests/test_private_import.cjs
+          python tools/ledger.py validate
 
       - name: Build public-only static site
         shell: bash
         run: |
+          python tools/ledger.py build --output _public_catalog.json
           python - <<'PY'
           from pathlib import Path
-          from datetime import datetime, timezone
           import json
 
           src = Path("web")
           out = Path("_site")
           (out / "data").mkdir(parents=True, exist_ok=True)
 
-          # Explicit allowlist. Never copy a local merged.json, private archive, or manifest.
-          for name in ("style.css",):
+          # Explicit allowlist. Only the public, CC-BY ledger under ledger/ is published.
+          # A local web/data/merged.json, private ledger, archive or manifest is never copied.
+          for name in ("style.css", "app.js"):
               (out / name).write_bytes((src / name).read_bytes())
 
           index = (src / "index.html").read_text(encoding="utf-8")
-          index = index.replace("Research Atlas · 私有科研地图", "Research Atlas · 公开入口")
-          index = index.replace("PRIVATE · LOCAL", "PUBLIC · EMPTY CATALOG")
+          index = index.replace("Research Atlas · 私有科研地图", "Research Atlas · 公共失败与判决地图")
+          index = index.replace("PRIVATE · LOCAL", "PUBLIC LEDGER · CC BY 4.0")
           index = index.replace(
               "轻量目录保留课题与结果、依据摘录及来源哈希。原始流程和实验数据不迁移。来源记载与独立复现分开标注。",
-              "本页仅提供公开软件界面，不包含私有研究题目、实验记录或未发表结论。"
+              "公开账本记录被检验过的研究假设及其限定范围内的判决。失败也是贡献：查过再跑，别重复别人的死路。通过 GitHub PR 贡献。"
           )
           index = index.replace(
               "检索问题、假设、失败条件与结果依据。来源记载不等同独立复现。",
-              "公开界面当前不含研究数据。私有科研目录只在已授权的环境中访问。"
+              "开跑之前，先查这个方向有没有人试过、在什么条件下失败。来源记载、CI 复现与独立复现分开标注。"
           )
           index = index.replace("来源清单</button>", "来源清单（需本地服务）</button>")
           (out / "index.html").write_text(index, encoding="utf-8")
 
-          app = (src / "app.js").read_text(encoding="utf-8")
-          (out / "app.js").write_text(app, encoding="utf-8")
-
-          public_catalog = {
-              "schema_version": "atlas-catalog-v0.2",
-              "project": "Research Atlas public interface",
-              "data_policy": "PUBLIC_SOFTWARE_ONLY_NO_PRIVATE_RECORDS",
-              "archive_scope": "PUBLIC_EMPTY_CATALOG",
-              "generated_utc": datetime.now(timezone.utc).isoformat(),
-              "records": [], "nodes": [], "edges": [],
-              "review_queue": [], "source_archives": {},
-              "statistics": {
-                  "scoped_topic_records": 0,
-                  "source_documented_records": 0,
-                  "independently_reproduced_results": 0
-              },
-              "index_errors": []
-          }
-          (out / "data" / "merged.json").write_text(
-              json.dumps(public_catalog, ensure_ascii=False, indent=2),
-              encoding="utf-8"
-          )
+          catalog = json.loads(Path("_public_catalog.json").read_text(encoding="utf-8"))
+          assert catalog["data_policy"] == "PUBLIC_LEDGER_CC_BY_4_0"
+          assert all(r.get("ledger_path", "").startswith("ledger/") for r in catalog["records"])
+          (out / "data" / "merged.json").write_text(json.dumps(catalog, ensure_ascii=False), encoding="utf-8")
           (out / ".nojekyll").write_text("", encoding="utf-8")
-          assert public_catalog["records"] == []
           assert set(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()) == {
               "index.html", "app.js", "style.css", "data/merged.json", ".nojekyll"
           }
-          print("Public-only Pages artifact prepared; private records = 0")
+          print(f"Public Pages artifact prepared; public ledger records = {len(catalog['records'])}")
           PY
 
       - name: Configure Pages

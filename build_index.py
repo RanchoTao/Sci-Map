@@ -57,7 +57,7 @@ def normalize_title(title):
 def source_reviewed(record):
     """A checked source or receipt is separate from scientific reproduction."""
     value=record.get('verification','')
-    return value.startswith(('SOURCE_DOCUMENTED','SOURCE_DOCUMENT_REVIEWED')) or value in ('REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED','TAO_SOURCE_ARITHMETIC_CHECKED_PEER_RECEIPT')
+    return value.startswith(('SOURCE_DOCUMENTED','SOURCE_DOCUMENT_REVIEWED')) or value in ('ARTIFACT_LINKED','CI_REPRODUCED','INDEPENDENTLY_REPRODUCED','REVIEWED','HISTORICAL_RECEIPT_INTEGRITY_VERIFIED','HISTORICAL_AGGREGATE_RECEIPT_INTEGRITY_VERIFIED','TAO_SOURCE_ARITHMETIC_CHECKED_PEER_RECEIPT')
 
 def derive(archives, seed=None, max_text_bytes=2_000_000, manifests=(), topic_only=False):
     catalog = migrate(json.loads(Path(seed).read_text(encoding='utf-8-sig')) if seed else {'records': []})

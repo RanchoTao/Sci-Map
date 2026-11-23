@@ -8,3 +8,7 @@ data/private*
 reports/
 evidence/
 
+web/data/merged.json
+private/
+_public_catalog.json
+_site/
