@@ -33,6 +33,7 @@ SCHEMA = 'verdict-record-v1'
 VERDICTS = ['SUPPORTED', 'KILLED_IN_SCOPE', 'IMPLEMENTATION_FAILED', 'LITERATURE_COLLISION',
             'INVALIDATED', 'RESOURCE_LIMITED', 'INCONCLUSIVE', 'OPEN']
 LEVELS = ['CLAIMED', 'SOURCE_DOCUMENTED', 'ARTIFACT_LINKED', 'CI_REPRODUCED', 'INDEPENDENTLY_REPRODUCED']
+FAILURES = ('KILLED_IN_SCOPE', 'IMPLEMENTATION_FAILED', 'LITERATURE_COLLISION', 'INVALIDATED')
 RELATIONS = {'refines', 'contradicts', 'supersedes', 'depends_on', 'duplicates', 'follows_up'}
 OPS = {'<', '<=', '>', '>=', '==', '~='}
 FIELDS = {'schema', 'id', 'title', 'domain', 'project', 'question', 'hypothesis', 'setup', 'outcome',
@@ -249,7 +250,7 @@ def search_records(records, query, verdict=None, domain=None, failures_only=Fals
             continue
         if domain and r.get('domain') != domain:
             continue
-        if failures_only and r.get('verdict') in ('SUPPORTED', 'OPEN'):
+        if failures_only and r.get('verdict') not in FAILURES:
             continue
         hay = ' '.join(str(r.get(k, '')) for k in ('id', 'title', 'question', 'hypothesis', 'setup', 'outcome',
                                                      'scope', 'cause', 'follow_up', 'project', 'domain')).lower()
@@ -320,7 +321,7 @@ def build(ledgers, private=False, tree=None):
         if missing:
             raise SystemExit(f'records address unknown tree nodes: {missing}')
         catalog['tree'] = tree
-    catalog['statistics']['failure_records'] = sum(r['status'] not in ('SUPPORTED', 'OPEN') for r in catalog['records'])
+    catalog['statistics']['failure_records'] = sum(r['status'] in FAILURES for r in catalog['records'])
     return catalog
 
 
