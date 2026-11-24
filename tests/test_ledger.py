@@ -192,7 +192,7 @@ class ProblemTreeImport(unittest.TestCase):
         self.assertEqual(area['attempts'][0]['verdict'], 'KILL')
         q = next(n for n in out['nodes'] if n['id'] == 'q1')
         self.assertEqual(q['problem']['strength'], 'explicit_open_problem')
-        self.assertIn('weak_followup_match', [f['code'] for f in q['flags']])
+        self.assertEqual(q['flags'], [])  # lexical similarity alone is not a relevance signal
         topic = next(n for n in out['nodes'] if n['id'] == 'T')
         self.assertIn('mixed_denominator', [f['code'] for f in topic['flags']])
 

@@ -64,12 +64,7 @@ def problem(node):
     op = (node.get('open_problems') or [{}])[0]
     fu = op.get('follow_up') or {}
     shortlist = fu.get('shortlist') or []
-    best = max((s.get('similarity') or 0 for s in shortlist), default=None)
     flags = []
-    if shortlist and best is not None and best < 0.05 and '相近' in str(fu.get('screen_outcome', '')):
-        flags.append({'code': 'weak_followup_match',
-                      'text_en': 'Labelled as having related follow-up work, but the best candidate has similarity ≈ 0. Treat as "no related follow-up found".',
-                      'text_zh': '标为"有相近后续文献"，但最相近候选的相似度约为 0。应视为"未发现相关后续"。'})
     strength = op.get('strength') or ('explicit_open_problem' if EXPLICIT.search(op.get('quote', '')) else 'author_future_work')
     return {
         'statement': op.get('statement') or node.get('name'),
