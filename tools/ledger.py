@@ -67,8 +67,16 @@ def load(ledgers):
 
 # ---------------------------------------------------------------- validation
 
+_PUNCT = set('.,:;()[]{}\'"`-_/\\|!?·，。：；（）、“”‘’《》')
+
+
 def _tokens(text):
-    return set(re.findall(r'[a-z0-9]{3,}|[一-鿿]', (text or '').lower()))
+    # Words, CJK characters and mathematical symbols. Symbols matter: in formal
+    # statements "P = NP" and "P ≠ NP" differ only by one of them.
+    text = (text or '').lower()
+    toks = set(re.findall(r'[a-z0-9]{3,}|[一-鿿]', text))
+    toks |= {ch for ch in text if not ch.isspace() and not ch.isalnum() and ch not in _PUNCT}
+    return toks
 
 
 def check_record(r, path=None):
@@ -205,10 +213,21 @@ def validate(ledgers):
     # Near-duplicate hypotheses are a warning: two scoped tests of similar ideas
     # can both be legitimate, but a reviewer should look before merging.
     toks = [(r['id'], _tokens(r.get('hypothesis', '') + ' ' + r.get('title', ''))) for r in records]
+    if len(toks) >= 10:
+        # Ignore boilerplate shared by many records (templated titles, common setup text).
+        df = {}
+        for _, ts in toks:
+            for tok in ts:
+                df[tok] = df.get(tok, 0) + 1
+        common = {tok for tok, n in df.items() if n > 0.3 * len(toks)}
+        toks = [(rid, ts - common) for rid, ts in toks]
     for i in range(len(toks)):
         for j in range(i + 1, len(toks)):
             a, b = toks[i][1], toks[j][1]
-            if a and b and len(a & b) / len(a | b) >= 0.8:
+            sym_a = {x for x in a if len(x) == 1 and not x.isalnum()}
+            sym_b = {x for x in b if len(x) == 1 and not x.isalnum()}
+            # Different operators (=, ≠, ∈, ∉, ≤ ...) mean different claims, however similar the words.
+            if sym_a == sym_b and len(a) >= 4 and len(b) >= 4 and len(a & b) / len(a | b) >= 0.8:
                 warnings.append(f'possible duplicate: {toks[i][0]} ~ {toks[j][0]} (link with related.duplicates or refines)')
     return errors, warnings, records
 

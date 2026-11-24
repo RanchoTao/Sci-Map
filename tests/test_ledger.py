@@ -93,6 +93,16 @@ class LedgerValidation(unittest.TestCase):
             self.assertTrue(any('possible duplicate' in w for w in warnings))
 
 
+class DuplicateDetection(unittest.TestCase):
+    def test_formal_statements_differing_by_a_symbol_are_not_duplicates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for rid, stmt in [('p-eq-np', 'P = NP under the frozen encoding'), ('p-ne-np', 'P ≠ NP under the frozen encoding')]:
+                write(tmp, variant(id=rid, title='Frozen open statement ' + rid, hypothesis='Lean proves the frozen statement: ' + stmt,
+                                   verdict='OPEN', evidence_level='CLAIMED', repro=None, cause=None))
+            _, warnings, _ = ledger.validate([tmp])
+            self.assertEqual(warnings, [])
+
+
 class LedgerBuildAndRepro(unittest.TestCase):
     def test_build_is_ui_compatible_catalog(self):
         cat = ledger.build([EXAMPLE])
