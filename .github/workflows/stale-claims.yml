@@ -1,0 +1,20 @@
+name: Mark stale claims
+# A claim without any activity for 7 days is labeled claim-stale so others may take the question.
+# Labels only; it posts no comments and closes nothing.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  issues: write
+jobs:
+  mark:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cutoff=$(date -u -d '7 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          gh issue list -R ${{ github.repository }} --label claim --state open --json number,updatedAt,labels \
+            --jq ".[] | select(.updatedAt < \"$cutoff\") | select([.labels[].name] | index(\"claim-stale\") | not) | .number" |
+          while read -r n; do gh issue edit "$n" -R ${{ github.repository }} --add-label claim-stale; done

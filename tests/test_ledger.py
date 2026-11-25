@@ -46,6 +46,34 @@ class LedgerValidation(unittest.TestCase):
         ok = ledger.check_record(variant(outcome='see https://github.com/RanchoTao/Sci-Map and repro/x.py; ratio 3:2'))
         self.assertEqual(ok, [])
 
+    def test_submit_checks_draft_against_ledger(self):
+        draft = variant(id='lr-three-diverges', evidence_level='CLAIMED', repro=None,
+                        hypothesis='Gradient descent on x^2 with learning rate 3 converges within 50 steps.')
+        res = ledger.prepare_submission(draft, [EXAMPLE], '2026-11-25')
+        self.assertTrue(res['ok'], res['errors'])
+        self.assertEqual(res['path'], 'examples/ledger/toy-optimization/lr-three-diverges.json')
+        self.assertIn('gd-quadratic-large-lr-diverges', [n['id'] for n in res['nearby']])
+        self.assertTrue(res['warnings'])
+        clash = ledger.prepare_submission(copy.deepcopy(BASE), [EXAMPLE], '2026-11-25')
+        self.assertTrue(any('already exists' in e for e in clash['errors']))
+
+    def test_agents_cannot_self_certify_reproduction(self):
+        draft = variant(id='agent-self-cert', contributor={'name': 'bot', 'kind': 'agent', 'model': 'm', 'operator': 'op'})
+        res = ledger.prepare_submission(draft, [EXAMPLE], '2026-11-25')
+        self.assertTrue(any('agents may not set CI_REPRODUCED' in e for e in res['errors']))
+
+    def test_json_schema_matches_validator(self):
+        schema = json.loads((ROOT / 'schemas' / 'verdict-record.schema.json').read_text(encoding='utf-8'))
+        self.assertEqual(set(schema['properties']), ledger.FIELDS)
+        self.assertEqual(set(schema['required']), set(ledger.REQUIRED))
+        self.assertEqual(schema['properties']['verdict']['enum'], ledger.VERDICTS)
+        self.assertEqual(schema['properties']['evidence_level']['enum'], ledger.LEVELS)
+        try:
+            import jsonschema
+        except ImportError:
+            return
+        jsonschema.validate(BASE, schema)
+
     def test_example_is_valid(self):
         errors, warnings, records = ledger.validate([EXAMPLE])
         self.assertEqual(errors, [])

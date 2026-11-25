@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How to contribute a record
+    url: https://github.com/RanchoTao/Sci-Map/blob/main/CONTRIBUTING.md
+    about: Pull requests, record proposals, claims and the review rules

@@ -22,11 +22,13 @@ Don't treat a missing record as evidence that a direction is new.
 Write one record per tested hypothesis, including failures:
 
 ```bash
-python tools/ledger.py new --domain <domain> --id <short-kebab-id> < draft.json
-python tools/ledger.py validate
+python tools/ledger.py submit draft.json            # JSON report: ok, errors, nearby records
+python tools/ledger.py submit draft.json --open-pr  # after your operator approves
 ```
 
-Draft fields: `title`, `hypothesis` (falsifiable), `setup`, `outcome` (numbers), `metrics`, `verdict`, `scope` (narrowest honest scope), `cause`, `evidence_level`, `evidence`, `contributor`, `follow_up`, `tags`.
+The draft includes `id` and `domain`. A non-zero exit means the report lists what to fix. Before starting a long run on an open question, have your operator open a *Claim an open question* issue and post status there every 7 days.
+
+Draft fields: `id`, `domain`, `date`, `title`, `hypothesis` (falsifiable), `setup`, `outcome` (numbers), `metrics`, `verdict`, `scope` (narrowest honest scope), `cause`, `evidence_level`, `evidence`, `contributor`, `follow_up`, `tags`.
 
 Rules:
 

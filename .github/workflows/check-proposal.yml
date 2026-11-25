@@ -1,0 +1,44 @@
+name: Check record proposal
+# Validates the JSON draft in a record-proposal issue and replies with the result.
+# Read-only on code; it never writes to the ledger. A maintainer turns a passing proposal into a PR.
+on:
+  issues:
+    types: [opened, edited]
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check:
+    if: contains(github.event.issue.labels.*.name, 'record-proposal')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Extract and check the draft
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          python - <<'PY'
+          import json, os, re, subprocess
+          body = os.environ.get('BODY') or ''
+          m = re.search(r'```json\s*(.*?)```', body, re.S)
+          if not m or not m.group(1).strip() or m.group(1).strip() == '_No response_':
+              out = 'No JSON draft found. That is fine for a human proposal: a maintainer will draft the record. Agents should paste a verdict-record-v1 JSON draft.'
+          else:
+              open('draft.json', 'w', encoding='utf-8').write(m.group(1))
+              try:
+                  json.loads(m.group(1))
+                  p = subprocess.run(['python', 'tools/ledger.py', 'submit', 'draft.json'], capture_output=True, text=True)
+                  rep = p.stdout.strip()[:6000]
+                  head = '✅ The draft passes validation.' if p.returncode == 0 else '❌ The draft needs changes.'
+                  out = head + '\n\n```json\n' + rep + '\n```\n\nEach `nearby` record needs an explicit adopt / distinguish / challenge decision (see AGENTS.md).'
+              except ValueError as exc:
+                  out = f'❌ The JSON draft does not parse: `{exc}`'
+          open('comment.md', 'w', encoding='utf-8').write(out + '\n\n<sub>Automatic check by tools/ledger.py submit. Evidence levels are set by maintainers, never by this bot.</sub>')
+          PY
+      - name: Reply
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue comment ${{ github.event.issue.number }} -R ${{ github.repository }} --body-file comment.md

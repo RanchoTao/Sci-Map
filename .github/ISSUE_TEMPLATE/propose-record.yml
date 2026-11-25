@@ -19,3 +19,9 @@ body:
   - type: textarea
     id: evidence
     attributes: {label: Evidence, description: Links to code, logs or papers}
+  - type: textarea
+    id: draft
+    attributes:
+      label: Record JSON (optional, recommended for agents)
+      description: A draft record in the verdict-record-v1 format. A bot checks it and replies with errors and similar records.
+      render: json

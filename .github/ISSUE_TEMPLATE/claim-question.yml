@@ -1,0 +1,33 @@
+name: Claim an open question
+description: Say you are working on an open problem or an OPEN record, so nobody duplicates the run
+title: "[claim] "
+labels: [claim]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A claim reserves a question for **7 days**. Post a status update in this issue at least once every 7 days
+        (what you ran, what died, what's next) or the claim lapses and is labeled `claim-stale`; anyone may then take it.
+        Closing the claim means submitting a record, any verdict. A failed attempt is a complete result.
+        认领后每 7 天在本 issue 更新一次进度，否则认领失效。以任何判决提交记录即完成认领，失败也算完成。
+  - type: input
+    id: target
+    attributes: {label: Problem node or record id, description: "From the map (tree node id) or an OPEN record id", placeholder: "open-problem-node-id"}
+    validations: {required: true}
+  - type: textarea
+    id: plan
+    attributes: {label: Hypothesis and plan, description: The falsifiable claim you will test and how (data, budget, baselines)}
+    validations: {required: true}
+  - type: dropdown
+    id: worker
+    attributes:
+      label: Who does the work
+      options: [Human, Agent with a responsible human operator, Human + agent]
+    validations: {required: true}
+  - type: input
+    id: agent
+    attributes: {label: Agent system and operator (if any), placeholder: "my-autoresearch-loop (model X), operator: @handle"}
+  - type: input
+    id: eta
+    attributes: {label: Expected first status update, placeholder: "2026-12-02"}
+    validations: {required: true}

@@ -2,6 +2,26 @@
 
 Every tested hypothesis is welcome, especially the ones that failed. One pull request can add one or many records.
 
+> 欢迎提交任何被检验过的假设，尤其是失败的。失败也是贡献。
+
+## Four ways in
+
+| You want to… | Do this |
+|---|---|
+| Add a result you already have | Open a PR with `ledger/<domain>/<id>.json` (start from `python tools/ledger.py new --template`) |
+| Add a result but can't open a PR | Open a **Propose a record** issue; paste a JSON draft if you can and a bot checks it |
+| Work on an open question | Open a **Claim an open question** issue first (see *Claims* below) |
+| Dispute a verdict | Open a **Challenge a verdict** issue, or submit a contradicting record with `related: contradicts` |
+
+## Claims
+
+Before spending compute on a problem from the map or an `OPEN` record, claim it so two people (or two agents) don't run the same thing.
+
+1. Open a *Claim an open question* issue naming the problem node or record id, your falsifiable hypothesis and plan.
+2. Post a short status update in that issue **at least every 7 days**: what ran, what died, what's next. A claim with no activity for 7 days is labeled `claim-stale` automatically and anyone may take the question.
+3. A claim is complete when you submit a record for it, with **any** verdict. `KILLED_IN_SCOPE`, `IMPLEMENTATION_FAILED` and `RESOURCE_LIMITED` all close a claim. If you stop, say so in the issue and release it; that is also a useful signal.
+4. Agents can claim, but the issue names the responsible human operator, who answers questions.
+
 ## What makes a good record
 
 1. **A falsifiable hypothesis.** "X improves Y by at least Z under setup S," not "explored X."
@@ -43,7 +63,15 @@ The command runs from the repository root without a shell or network secrets, an
 
 ## Agents
 
-Agent-written records are welcome. `contributor.kind` must be `agent`, `contributor.model` should name the system, and `contributor.operator` must name the human who is responsible for the submission and answers review comments. See [AGENTS.md](AGENTS.md).
+Agent-written records are welcome. Agents submit through one command that takes JSON and returns JSON:
+
+```bash
+python tools/ledger.py submit draft.json            # check only: errors, privacy problems, similar records
+python tools/ledger.py submit draft.json --write    # write ledger/<domain>/<id>.json if it passes
+python tools/ledger.py submit draft.json --open-pr  # also branch, commit and open a PR with the operator's gh login
+```
+
+`submit` refuses records that set `CI_REPRODUCED` or `INDEPENDENTLY_REPRODUCED` from an agent, ids that already exist, and anything the privacy gate flags. It returns `nearby` records the agent must adopt, distinguish or challenge. `contributor.kind` must be `agent`, `contributor.model` should name the system, and `contributor.operator` must name the human who is responsible for the submission and answers review comments. See [AGENTS.md](AGENTS.md).
 
 ## Review
 
@@ -51,4 +79,4 @@ Maintainers check that the hypothesis, scope and verdict are consistent with the
 
 ## Privacy
 
-Don't submit unpublished work you aren't ready to share, credentials, personal data, or datasets you have no right to redistribute. Records are published under CC BY 4.0 unless the record states another license.
+`validate` rejects records containing credentials, e-mail addresses, phone numbers or absolute local paths (`D:\\…`, `/home/<user>/…`); point evidence at https URLs or repository-relative paths. Don't submit unpublished work you aren't ready to share, credentials, personal data, or datasets you have no right to redistribute. Records are published under CC BY 4.0 unless the record states another license.

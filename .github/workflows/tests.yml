@@ -15,6 +15,28 @@ jobs:
       - run: node tests/test_private_import.cjs
       - name: Validate public ledger
         run: python tools/ledger.py validate
+      - name: Summarize changed records
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch -q --depth=1 origin ${{ github.event.pull_request.base.sha }}
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, subprocess, sys
+          sys.path.insert(0, 'tools'); import ledger
+          files = subprocess.run(['git', 'diff', '--name-only', '${{ github.event.pull_request.base.sha }}', 'HEAD', '--', 'ledger/'],
+                                 capture_output=True, text=True).stdout.split()
+          _, _, records = ledger.validate([ledger.DEFAULT_LEDGER])
+          print('## Records in this PR\n')
+          print('| id | verdict | evidence | similar existing records |\n|---|---|---|---|')
+          for f in files:
+              if not f.endswith('.json'):
+                  continue
+              try:
+                  r = json.load(open(f, encoding='utf-8'))
+              except OSError:
+                  print(f'| {f} | deleted | | |'); continue
+              near = ', '.join(f"{n['id']} ({n['verdict']})" for n in ledger.nearby(records, r))
+              print(f"| `{r.get('id')}` | {r.get('verdict')} | {r.get('evidence_level')} | {near or '—'} |")
+          PY
 
   reproduce:
     # Runs contributors' cheap CPU-only repro commands for records touched by a PR.

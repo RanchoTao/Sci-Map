@@ -10,6 +10,7 @@ level automatically: CI reports reproduction results, maintainers decide.
   python tools/ledger.py new --domain llm-training --id my-idea < draft.json
   python tools/ledger.py build --output web/data/merged.json
   python tools/ledger.py repro <id> [<id> ...]
+  python tools/ledger.py submit draft.json [--write] [--open-pr]   # agents: JSON in, JSON out
   python tools/ledger.py import-nk bank.jsonl --domain pde --contributor "name" --out drafts/
 
 Standard library only (Python 3.10+).
@@ -404,6 +405,66 @@ def from_negative_knowledge(nk, domain, contributor, kind='human', operator=None
     }
 
 
+# ---------------------------------------------------------------- submission (agents and humans)
+
+def nearby(records, rec, limit=5):
+    """Existing records whose hypothesis/title overlaps rec: the agent must adopt, distinguish or challenge each."""
+    mine = _tokens(rec.get('hypothesis', '') + ' ' + rec.get('title', ''))
+    scored = []
+    for r in records:
+        if r.get('id') == rec.get('id'):
+            continue
+        theirs = _tokens(r.get('hypothesis', '') + ' ' + r.get('title', ''))
+        if mine and theirs:
+            j = len(mine & theirs) / len(mine | theirs)
+            if j >= 0.25:
+                scored.append((round(j, 3), r))
+    scored.sort(key=lambda x: -x[0])
+    return [{'id': r['id'], 'title': r['title'], 'verdict': r['verdict'], 'evidence_level': r['evidence_level'],
+             'scope': r['scope'], 'similarity': j} for j, r in scored[:limit]]
+
+
+def prepare_submission(draft, ledgers, today=None):
+    """Check one draft record against the schema, the privacy gate and the existing ledger.
+
+    Returns a dict that is safe to print as JSON:
+    {ok, id, path, errors, warnings, nearby, record}. Nothing is written.
+    """
+    rec = dict(draft) if isinstance(draft, dict) else {}
+    rec.setdefault('schema', SCHEMA)
+    base = Path(ledgers[0])
+    path = base / str(rec.get('domain', '_')) / f"{rec.get('id', '_')}.json"
+    errors = check_record(draft if not isinstance(draft, dict) else rec, path)
+    warnings = []
+    _, _, records = validate(ledgers)
+    if any(r.get('id') == rec.get('id') for r in records):
+        errors.append(f"id {rec.get('id')} already exists; choose another id or link with related")
+    level = rec.get('evidence_level')
+    c = rec.get('contributor') if isinstance(rec.get('contributor'), dict) else {}
+    if c.get('kind') == 'agent' and level in ('CI_REPRODUCED', 'INDEPENDENTLY_REPRODUCED'):
+        errors.append(f'agents may not set {level}; maintainers set it after review')
+    if rec.get('date') and today and rec['date'] > today:
+        errors.append('date is in the future')
+    near = nearby(records, rec) if isinstance(draft, dict) else []
+    if near and not rec.get('related'):
+        warnings.append('similar records exist; state adopt / distinguish / challenge for each and link with related')
+    return {'ok': not errors, 'id': rec.get('id'), 'path': _rel(path), 'errors': errors,
+            'warnings': warnings, 'nearby': near, 'record': rec}
+
+
+def open_pull_request(paths, title, body):
+    """Branch, commit and open a PR with the operator's own git/gh credentials."""
+    branch = 'record/' + re.sub(r'[^a-z0-9-]+', '-', Path(paths[0]).stem)[:50] + '-' + dt.datetime.now().strftime('%H%M%S')
+    steps = [['git', 'checkout', '-b', branch], ['git', 'add', *map(str, paths)],
+             ['git', 'commit', '-m', title], ['git', 'push', '-u', 'origin', branch],
+             ['gh', 'pr', 'create', '--title', title, '--body', body]]
+    for cmd in steps:
+        proc = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        if proc.returncode:
+            return {'ok': False, 'failed_step': ' '.join(cmd[:3]), 'stderr': proc.stderr[-800:]}
+    return {'ok': True, 'branch': branch, 'pr': proc.stdout.strip()}
+
+
 # ---------------------------------------------------------------- CLI
 
 def main(argv=None):
@@ -429,6 +490,10 @@ def main(argv=None):
     r.add_argument('ids', nargs='*', help='Record ids; default: all records that have repro')
     r.add_argument('--files', nargs='*', default=[], help='Changed file paths (CI); non-ledger paths ignored')
     r.add_argument('--report', help='Write a markdown report here (e.g. $GITHUB_STEP_SUMMARY)')
+    su = sub.add_parser('submit', help='Check (and optionally write / open a PR for) draft records; JSON in, JSON out')
+    su.add_argument('drafts', nargs='*', default=['-'], help='Draft JSON files (a record or a list of records); - for stdin')
+    su.add_argument('--write', action='store_true', help='Write passing records to ledger/<domain>/<id>.json')
+    su.add_argument('--open-pr', action='store_true', help='Also branch, commit and open a PR with your gh login')
     i = sub.add_parser('import-nk', help='Convert a Negative_Knowledge bank (JSON list or JSONL) into drafts')
     i.add_argument('bank')
     i.add_argument('--domain', required=True)
@@ -525,6 +590,35 @@ def main(argv=None):
             with open(a.report, 'a', encoding='utf-8') as fh:
                 fh.write(text + '\n')
         return 1 if failed else 0
+
+    if a.cmd == 'submit':
+        drafts = []
+        for src in a.drafts:
+            raw = sys.stdin.read() if src == '-' else Path(src).read_text(encoding='utf-8-sig')
+            data = json.loads(raw)
+            drafts += data if isinstance(data, list) else [data]
+        results = [prepare_submission(d, ledgers, dt.date.today().isoformat()) for d in drafts]
+        ids = [r['id'] for r in results]
+        for r in results:
+            if ids.count(r['id']) > 1:
+                r['errors'].append('the same id appears twice in this submission')
+                r['ok'] = False
+        report = {'ok': all(r['ok'] for r in results), 'results': [{k: v for k, v in r.items() if k != 'record'} for r in results]}
+        if report['ok'] and (a.write or a.open_pr):
+            written = []
+            for r in results:
+                path = ROOT / r['path'] if not Path(r['path']).is_absolute() else Path(r['path'])
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(r['record'], ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+                written.append(path)
+            report['written'] = [_rel(x) for x in written]
+            if a.open_pr:
+                body = 'Records submitted with `tools/ledger.py submit`.\n\n' + '\n'.join(
+                    f"- `{r['id']}` · {r['record'].get('verdict')} · {r['record'].get('evidence_level')}" for r in results)
+                report['pull_request'] = open_pull_request(written, f'Add {len(written)} record(s): ' + ', '.join(ids)[:60], body)
+                report['ok'] = report['pull_request']['ok']
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report['ok'] else 1
 
     if a.cmd == 'import-nk':
         raw = Path(a.bank).read_text(encoding='utf-8-sig').strip()
