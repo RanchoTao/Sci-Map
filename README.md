@@ -1,56 +1,97 @@
-# Research Atlas
+# Sci-Map
 
-Local, provenance-preserving Research Map. The public repository contains only generic software and an empty catalog. Private machine evidence and derived indexes are never committed here.
+**Make AI-driven research auditable by humans.** Sci-Map turns the hundreds of experiments an autoresearch system runs overnight into a map a person can read in minutes: what was tried, what died and why, what still stands, and which conclusions deserve a second look.
 
-The current migration scope is **research topics and source-supported results only**. Procedure files, datasets, experiment binaries and raw session archives are excluded. The compact catalog contains scoped judgments, concise result metrics, provenance excerpts and file hashes. Source-documented historical conclusions do not imply independently rerun experiments.
+> 让人能看懂、能审计 AI 做的研究。AI 一夜能跑几百个实验，人却读不完日志。Sci-Map 把每个被检验过的假设变成一条带适用范围、带证据等级的判决，再画成一张人能快速扫过的地图：哪些方向已经死了、为什么死、哪些还活着、哪些结论最值得复查。失败也是贡献。
 
-```powershell
-python pipeline.py --review-catalog /private/review/derived-reviewed.json --site web
-python serve.py --site web --port 8765
+## Why
+
+Autoresearch systems such as [karpathy/autoresearch](https://github.com/karpathy/autoresearch) and [AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) now produce results faster than anyone can review them. The bottleneck has moved from running experiments to *understanding and trusting* them. Reading raw logs or generated papers doesn't scale, and most failures never leave the machine they ran on, so the next agent walks into the same dead end ([recent work](https://arxiv.org/abs/2606.21024) shows that sharing structured failures makes agents better and cheaper).
+
+Sci-Map takes a cognitive-load-first approach to this oversight problem:
+
+- **Small, structured units.** Every result becomes one verdict: hypothesis, scope, verdict, cause, evidence. You review claims, not transcripts.
+- **Verdicts that keep distinctions humans care about.** `KILLED_IN_SCOPE` is not `IMPLEMENTATION_FAILED`; a literature collision is not a negative result; `INCONCLUSIVE` stays inconclusive.
+- **Scope is mandatory.** A kill at 10M parameters says nothing about 10B unless someone tests it.
+- **Evidence strength is visible.** `CLAIMED → SOURCE_DOCUMENTED → ARTIFACT_LINKED → CI_REPRODUCED → INDEPENDENTLY_REPRODUCED`. Cheap claims carry a repro command that CI re-runs.
+- **A map, not a log.** Records are linked into `Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up` and browsed visually, so the state of a research direction is visible at a glance.
+- **Git is the database.** One JSON file per record under `ledger/<domain>/<id>.json`; review, history and forks come from git. Humans and agents both contribute, and an agent always names a responsible human operator.
+
+The interface is under active redesign around audit workflows: what changed since you last looked, ten-second audit cards, and highlighting weakly supported verdicts that block large parts of the map.
+
+## Use it before you run an experiment
+
+```bash
+git clone https://github.com/RanchoTao/Sci-Map && cd Sci-Map
+python tools/ledger.py search "warmup schedule" --failures   # dead ends near your idea
+python tools/ledger.py search "" --domain llm-training --json  # machine-readable, for agents
 ```
 
-Raw member preview is disabled by default. Portable embedded excerpts are sufficient for reviewing the archived knowledge; restoring the full original experimental environment is outside this compact archive's scope.
+Agents should run `search` before proposing an experiment and either adopt or explicitly argue against each matching verdict. See [AGENTS.md](AGENTS.md).
 
-## Build and run
+## Contribute a verdict
 
-Python 3.10+; no third-party packages or remote scripts required.
-
-```powershell
-python -m unittest discover -s tests -v
-python pipeline.py --review-catalog /private/review/derived-reviewed.json --site web
-python serve.py --site web --port 8765
+```bash
+python tools/ledger.py new --domain llm-training --id rope-base-50k-no-gain --template
+# edit ledger/llm-training/rope-base-50k-no-gain.json
+python tools/ledger.py validate
+python tools/ledger.py repro rope-base-50k-no-gain    # if you added a repro block
 ```
 
-Open http://127.0.0.1:8765. No public demo records enter the real catalog. Copy `data/catalog.json` to `web/data/merged.json` for an empty UI. The server accepts only five static file routes, with no directory listing or archive download. Raw previews remain disabled unless explicitly enabled for a separately authorized use.
+Open a pull request. CI validates every record and re-runs the repro commands of the records you touched. CI never upgrades evidence levels itself: a maintainer sets `CI_REPRODUCED` after a matching run. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the review rules. A complete example lives in [`examples/ledger/`](examples/ledger/toy-optimization/gd-quadratic-large-lr-diverges.json). The schema is documented in [`schemas/verdict-record.schema.json`](schemas/verdict-record.schema.json); `tools/ledger.py validate` is the authoritative checker.
 
-## Model and review boundaries
+Coming from a Negative_Knowledge bank? `python tools/ledger.py import-nk bank.jsonl --domain pde --contributor "you" --out drafts/` converts its records into `CLAIMED` drafts for review.
 
-`Research Area → Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up`
+## Browse the map
 
-Every node and relation carries original provenance. Source files generate **NEEDS_REVIEW** candidates, not verified scientific topics. A matching section heading creates an explicitly unreviewed section node. Words such as KILL or GO become search hints only. File modification dates carry `FILE_MTIME` provenance and are not inferred event dates. Verified integrity proves that bytes match a manifest, not that the scientific claim is correct.
+```bash
+python tools/ledger.py build              # writes web/data/merged.json
+python serve.py --site web --port 8765    # http://127.0.0.1:8765
+```
 
-Review records may supply `kind`, `status`, `scope`, `cause`, `verification: SOURCE_DOCUMENTED`, source lines and explicit historical dates. A scoped KILL, failed implementation, literature collision, invalidated result, resource limit and inconclusive assay must remain distinct. Duplicate byte contents share one document record but preserve all source paths and machines. Identical titles with different content create review proposals; neither file nor conclusion is silently merged.
+The public site on GitHub Pages is built from `ledger/` only. It offers list, full-text search, filters by verdict, evidence level, domain and contributor, a timeline, a `Problem → Hypothesis → Experiment → Evidence → Verdict → Follow-up` graph, and a duplicate-review queue.
 
-List, full-text query, domain/project/status/machine/tag filters, pagination, source timeline, graph, duplicate review and global file inventory work without external dependencies. Graph views show at most 100 source nodes on the current page. The unknown area of the map is an inventory gap, not a novelty claim; new literature verification is required before exploring a purported blank area.
+## Problem map
 
-## Incremental imports and portability
+A ledger answers "what was tried". A problem tree answers "what is worth trying": domain → topic → area → open problem, each problem tied to the exact sentence where a paper posed it. `tools/import_tree.py` converts a literature-derived research tree into this form and adds audit hints (for example, a follow-up label that its own similarity scores don't support). Ledger records point at problems through `addresses`, so the map shows which open problems someone has already attacked and how it went.
 
-Re-run the same `build_index.py` command on the same archive set. Content-addressed IDs are stable. An explicit seed can preserve curated records; evidence origins are appended idempotently. `--manifest` adds logical paths that reference duplicate content in earlier shards. Multiple shards of one machine retain independent source archive metadata.
+```bash
+python tools/import_tree.py research_tree.json --out tree.json          # public-safe: drops local paths
+python tools/ledger.py build --tree tree.json                           # map becomes the default view
+```
 
-Version v0.1 indexes migrate additively to v0.2; missing verification defaults to UNREVIEWED and missing dates to UNSPECIFIED. Do not replace original evidence when migrating the derived index.
+Each area shows a one-line summary, papers to start with, what reviewers most often question, and ten-second problem cards (status, how explicitly the authors called it open, source page) with details folded away.
 
-For a new machine or account in compact mode: clone the private knowledge repository, verify downloaded catalog/report hashes against its ledger, clone this generic software, rebuild the index from `derived-reviewed.json`, run tests and launch the loopback server. Embedded short excerpts, scoped topic IDs and source hashes restore the knowledge catalog independently of old absolute paths. External credentials and remote permissions need independent restoration. Compact mode does not preserve full experimental code/data/history. A private repository URL alone is not proof that remote objects remain downloadable: keep download-and-hash receipts and explicit BLOCKED gaps.
+## Private ledgers
 
-This map does not start or schedule AutoResearch. Scientific restart requires an independently verified ARCHIVE_GATE=PASS, both machine manifests, restored remote evidence and a verified scheduler.
+Unpublished work uses the same format in a separate directory that never enters this repository:
 
-## GitHub Pages: local-only private catalog import
+```bash
+python tools/ledger.py --ledger D:/research/private-ledger validate
+python tools/ledger.py --ledger ledger --ledger D:/research/private-ledger build --private --output private/merged.json
+```
 
-The publicly deployed Pages artifact is allowlisted to `index.html`, `app.js`, `style.css`, `data/merged.json` (an **empty, generated** catalog), and `.nojekyll`. Neither the private Research-Archive repository nor its contents are accessed by the public build.
+On the public site, a private `merged.json` can be opened from disk. It is parsed in browser memory only: never uploaded, cached or written to storage. Moving a record to the public ledger means opening a PR with that one file.
 
-1. From an authorized computer, recover the private compact snapshot according to `Research-Archive/RECOVERY.md` and verify its SHA-256 ledger.
-2. Use `build_index.py --review-catalog <path-to-compact-catalog.json> --output <private-dir>/merged.json` or use a previously generated local `web/data/merged.json` after checking it has schema `atlas-catalog-v0.2`.
-3. Visit the HTTPS Pages site and choose the local `merged.json` in the import panel. The browser parses it **in memory**. Refresh or click “清空内存中的私有地图” to discard the active catalog; the original file stays on disk.
+The original archive importer (`build_index.py`, `pipeline.py`) still builds a provenance catalog from hash-verified machine ZIP archives. Its boundaries are unchanged: source files become `NEEDS_REVIEW` candidates, never verified topics; words like KILL or GO become search hints only; file modification dates are never treated as event dates; byte-level integrity is not scientific correctness. Raw member preview is disabled by default and limited to loopback.
 
-This is not GitHub login, automatic cloud synchronization, or a remotely hosted private dashboard. It requires manual retrieval/transfer of the JSON to each device. Do not choose the archive itself, source manifests, secrets, or private datasets. Import is refused on non-HTTPS remote origins. Data is never intentionally posted, cached in browser storage, or included in the public Pages artifact. Avoid untrusted browser extensions, shared devices, and untrusted copies of the public website; the hosting party can change the served JavaScript.
+## Interpretation rules
 
-For one-click authenticated sync later, use a separately authenticated backend (GitHub OAuth + server-side scoped access or a dedicated authenticated database with row-level security). Never embed a GitHub PAT, Supabase service-role key, or private repository content in this public client.
+- A verdict applies only to the hypothesis and scope it states.
+- `CLAIMED` and `SOURCE_DOCUMENTED` records report what a contributor or source says. They are not reproductions.
+- An empty region of the map is a gap in what has been recorded, not a novelty claim. Check the literature before treating it as unexplored.
+- Possible duplicates are flagged for review, never silently merged.
+
+## Licenses
+
+Code: [MIT](LICENSE). Ledger data: [CC BY 4.0](ledger/LICENSE.md) unless a record states otherwise. Python 3.10+, standard library only; the web UI has no external dependencies, telemetry or remote scripts. To cite Sci-Map, see [CITATION.cff](CITATION.cff).
+
+## Related work
+
+- [karpathy/autoresearch](https://github.com/karpathy/autoresearch): single-GPU agent experiment loop
+- [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw): idea-to-paper pipeline with cross-run lessons
+- [hch-wang/Negative_Knowledge](https://github.com/hch-wang/Negative_Knowledge): typed failure records as agent memory
+- alphaXiv AI track, "A Society of AI Scientists": an agent preprint server with a claim ledger
+- autoresearch@home, Hyperspace AGI: distributed AutoResearch that shares best results within a single benchmark
+
+Sci-Map aims to sit beside systems like these as the human-facing layer: a shared, auditable record of what was tried and what happened.

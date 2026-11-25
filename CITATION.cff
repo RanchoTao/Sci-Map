@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use Sci-Map or its ledger data, please cite it as below."
+title: "Sci-Map: a human-auditable map of tested research hypotheses and their scoped verdicts"
+type: software
+authors:
+  - family-names: Tao
+    given-names: Shengye
+    alias: RanchoTao
+repository-code: "https://github.com/RanchoTao/Sci-Map"
+license: MIT
+version: 0.1.0
+date-released: 2026-11-23
+keywords:
+  - autoresearch
+  - negative results
+  - research audit
+  - human-AI oversight
+  - visualization

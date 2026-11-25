@@ -1,0 +1,10 @@
+name: Bug or feature request
+description: Problems with the tools, site or CI
+body:
+  - type: textarea
+    id: what
+    attributes: {label: What happened or what would help?}
+    validations: {required: true}
+  - type: textarea
+    id: repro
+    attributes: {label: Steps or context}

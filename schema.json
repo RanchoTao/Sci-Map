@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Research Atlas provenance catalog v0.2",
+  "title": "Sci-Map provenance catalog v0.2",
   "type": "object",
   "required": ["schema_version", "records", "nodes", "edges"],
   "properties": {

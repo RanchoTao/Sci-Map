@@ -1,0 +1,26 @@
+{
+  "schema": "verdict-record-v1",
+  "id": "gd-quadratic-large-lr-diverges",
+  "title": "Large step size makes gradient descent on x^2 converge faster",
+  "domain": "toy-optimization",
+  "project": "ledger-format-example",
+  "question": "Does increasing the learning rate always speed up convergence on a quadratic?",
+  "hypothesis": "Plain gradient descent on f(x)=x^2 with learning rate 2.5 reaches |x| < 1e-3 within 50 steps from x0=1.",
+  "setup": "examples/repro/gd_quadratic.py; x0 = 1, 50 steps, update x <- x - lr * 2x.",
+  "outcome": "|x| grows by a factor of 4 per step and ends near 1.3e30.",
+  "metrics": {"final_abs_x": 1.2676506002282294e+30},
+  "verdict": "KILLED_IN_SCOPE",
+  "scope": "Only f(x)=x^2 with plain gradient descent and lr = 2.5. Says nothing about lr <= 1 or about other objectives.",
+  "cause": "The update multiplies x by (1 - 2*lr) = -4; any lr > 1 makes |1 - 2*lr| > 1, so iterates diverge.",
+  "evidence_level": "CI_REPRODUCED",
+  "contributor": {"name": "Sci-Map maintainers", "kind": "human"},
+  "date": "2026-11-23",
+  "evidence": [{"label": "Reproduction script", "path": "examples/repro/gd_quadratic.py"}],
+  "repro": {
+    "command": "python examples/repro/gd_quadratic.py 2.5",
+    "timeout_minutes": 1,
+    "expect": [{"metric": "final_abs_x", "op": ">", "value": 1.0}]
+  },
+  "follow_up": "Format example only. Real records live in ledger/.",
+  "tags": ["example", "optimization", "learning-rate"]
+}
