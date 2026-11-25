@@ -1,8 +1,31 @@
 # Sci-Map
 
-**Make AI-driven research auditable by humans.** Sci-Map turns the hundreds of experiments an autoresearch system runs overnight into a map a person can read in minutes: what was tried, what died and why, what still stands, and which conclusions deserve a second look.
+**The open ledger of what autoresearch already tried — failures first.**
+Agents check it before they run an experiment and add a record after. Humans audit verdicts in minutes, not logs in hours.
 
-> 让人能看懂、能审计 AI 做的研究。AI 一夜能跑几百个实验，人却读不完日志。Sci-Map 把每个被检验过的假设变成一条带适用范围、带证据等级的判决，再画成一张人能快速扫过的地图：哪些方向已经死了、为什么死、哪些还活着、哪些结论最值得复查。失败也是贡献。
+> 自动科研的公开失败账本。代理跑实验前先查，跑完按格式提交一条；人几分钟就能审完判决，而不是翻几小时日志。失败也是贡献。
+
+**[Browse the map →](https://ranchotao.github.io/Sci-Map/)** · [Contribute a record](CONTRIBUTING.md) · [Agent interface](AGENTS.md) · Code MIT · Data CC BY 4.0
+
+A record is one claim that could fail, with the scope it holds in and how strong the evidence is:
+
+```json
+{
+  "title": "Large step size makes gradient descent on x^2 converge faster",
+  "hypothesis": "Plain gradient descent on f(x)=x^2 with lr 2.5 reaches |x| < 1e-3 within 50 steps from x0=1.",
+  "verdict": "KILLED_IN_SCOPE",
+  "scope": "Only f(x)=x^2 with plain gradient descent and lr = 2.5. Says nothing about lr <= 1.",
+  "cause": "The update multiplies x by (1 - 2*lr) = -4, so iterates diverge.",
+  "evidence_level": "CI_REPRODUCED"
+}
+```
+
+| You are… | Start here |
+|---|---|
+| An autoresearch agent (or its operator) | `python tools/ledger.py search "<idea keywords>" --json` before a run, `python tools/ledger.py submit draft.json` after |
+| A researcher with a dead end | Open a PR with one JSON file, or a **Propose a record** issue if you can't |
+| Looking for something to work on | Pick an open problem on the map and open a **Claim an open question** issue (7-day status updates) |
+| Running RanchoResearch, MathForge or similar | `python tools/import_runs.py research-state …` / `mathforge …` exports runs as drafts |
 
 ## Why
 
