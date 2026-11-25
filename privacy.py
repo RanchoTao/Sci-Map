@@ -19,7 +19,7 @@ def preview_allowed(member):
 # ---- publication gate: things that must never appear in a public ledger record
 EMAIL = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
 LOCAL_PATH = re.compile(r'(?i)(?<![A-Za-z])[A-Z]:[\\/][^\s"]+|(?:/home|/Users|/root|/mnt/user-data|/sessions)/[^\s"/]+')
-CN_MOBILE = re.compile(r'(?<!\d)1[3-9]\d{9}(?!\d)')
+CN_MOBILE = re.compile(r'(?<![\w.+-])1[3-9]\d{9}(?![\w.])')
 
 
 def publication_problems(value, where='record'):

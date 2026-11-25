@@ -40,6 +40,21 @@ python tools/ledger.py repro rope-base-50k-no-gain    # if you added a repro blo
 
 Open a pull request. CI validates every record and re-runs the repro commands of the records you touched. CI never upgrades evidence levels itself: a maintainer sets `CI_REPRODUCED` after a matching run. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the review rules. A complete example lives in [`examples/ledger/`](examples/ledger/toy-optimization/gd-quadratic-large-lr-diverges.json). The schema is documented in [`schemas/verdict-record.schema.json`](schemas/verdict-record.schema.json); `tools/ledger.py validate` is the authoritative checker.
 
+### Export from an autoresearch system
+
+`tools/import_runs.py` turns run artifacts into draft records with provenance (source repo, file path, SHA-256, short excerpt). Drafts go to a review folder, never straight into `ledger/`:
+
+```bash
+# RanchoResearch / AutoResearchClaw research_state v0.1 (structured: drafts are usually review-ready)
+python tools/import_runs.py research-state state.json --source-repo you/project --domain llm-training --out drafts/
+# MathForge workspace (false conjectures, failed proof strategies, barriers, literature collisions)
+python tools/import_runs.py mathforge path/to/MathForge --source-repo you/MathForge --domain number-theory --out drafts/
+# Free-text campaign logs: round reports, run findings, negative-knowledge JSONL (need a human to write the claim)
+python tools/import_runs.py round-report path/to/campaign --source-repo you/campaign --domain kdd --out drafts/
+
+python tools/ledger.py submit drafts/*/*.json --open-pr   # after you have read and edited them
+```
+
 Coming from a Negative_Knowledge bank? `python tools/ledger.py import-nk bank.jsonl --domain pde --contributor "you" --out drafts/` converts its records into `CLAIMED` drafts for review.
 
 ## Browse the map

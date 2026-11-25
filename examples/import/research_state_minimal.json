@@ -1,0 +1,266 @@
+{
+ "schema_version": "0.1.0",
+ "migration": {
+  "source_version": null,
+  "target_version": "0.1.0",
+  "migrated_at": "2026-10-11T04:00:00Z",
+  "migration_id": "example",
+  "notes": null
+ },
+ "project": {
+  "id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+  "title": "Toy step-size study",
+  "short_name": "toy-lr",
+  "description": "Format example for Sci-Map export.",
+  "created_at": "2026-10-11T04:00:00Z",
+  "updated_at": "2026-10-11T04:00:00Z",
+  "status": "RUNNING",
+  "research_domain": [
+   "optimization"
+  ],
+  "owners": [
+   "example-operator"
+  ],
+  "advisors": [],
+  "repository": null,
+  "current_decision": null,
+  "current_research_decision": null,
+  "current_research_verdict": "UNKNOWN",
+  "current_phase": "testing",
+  "priority": "LOW",
+  "tags": [
+   "example"
+  ],
+  "dependencies": [],
+  "active_hypotheses": [
+   "hyp_01M88TSP3SAYSZ8CRHEPHB5QRP"
+  ],
+  "next_action": "task_01M88TSY4TQ5CRAN67F63M11Z3",
+  "resume_point": null,
+  "frozen_at": null,
+  "archived_at": null
+ },
+ "hypotheses": [
+  {
+   "id": "hyp_01M88TSP3S87B1TBMSA9QV4E2Y",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "statement": "Gradient descent on x^2 with lr 2.5 converges within 50 steps",
+   "formal_statement": null,
+   "status": "REFUTED",
+   "parent_hypothesis": null,
+   "children": [],
+   "assumptions": [
+    "f(x)=x^2",
+    "x0=1"
+   ],
+   "supporting_claims": [],
+   "attacking_claims": [
+    "claim_01M88TSP3S5XVFWDNFWVADFEXF"
+   ],
+   "created_by": "agent:planner",
+   "agent_run_id": null,
+   "created_at": "2026-10-11T04:00:00Z",
+   "last_updated": "2026-10-11T04:00:00Z",
+   "confidence": null,
+   "kill_reason": "Update multiplies x by -4 each step, so iterates diverge.",
+   "human_verification": "UNREVIEWED"
+  },
+  {
+   "id": "hyp_01M88TSP3SAYSZ8CRHEPHB5QRP",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "statement": "Gradient descent on x^2 with lr 0.4 converges within 50 steps",
+   "formal_statement": null,
+   "status": "PROPOSED",
+   "parent_hypothesis": null,
+   "children": [],
+   "assumptions": [],
+   "supporting_claims": [],
+   "attacking_claims": [],
+   "created_by": "agent:planner",
+   "agent_run_id": null,
+   "created_at": "2026-10-11T04:00:00Z",
+   "last_updated": "2026-10-11T04:00:00Z",
+   "confidence": null,
+   "kill_reason": null,
+   "human_verification": "UNREVIEWED"
+  }
+ ],
+ "claims": [
+  {
+   "id": "claim_01M88TSP3S5XVFWDNFWVADFEXF",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "statement": "|x| grows 4x per step at lr 2.5",
+   "claim_type": "EMPIRICAL",
+   "scope": "Only f(x)=x^2, plain GD, lr 2.5, x0=1, 50 steps",
+   "status": "SUPPORTED",
+   "confidence": 0.99,
+   "supporting_evidence": [
+    "ev_01M88TSP3SG7WK350HBDPZKM2M",
+    "ev_01M88TSP3SQRTXPMSC4MZ1GXES"
+   ],
+   "opposing_evidence": [],
+   "dependencies": [],
+   "source": [],
+   "created_by": "agent:runner",
+   "agent_run_id": null,
+   "reviewed_by": [],
+   "created_at": "2026-10-11T04:00:00Z",
+   "last_verified_at": null,
+   "human_verification": "UNREVIEWED",
+   "notes": null
+  }
+ ],
+ "evidence": [
+  {
+   "id": "ev_01M88TSP3SG7WK350HBDPZKM2M",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "type": "EXPERIMENT",
+   "title": "50-step run log",
+   "summary": "final |x| = 1.27e30",
+   "supports": [
+    "claim_01M88TSP3S5XVFWDNFWVADFEXF"
+   ],
+   "opposes": [],
+   "strength": "DECISIVE",
+   "source_uri": null,
+   "artifact_id": "art_01M88TSP3S3FX530E80R5VE35A",
+   "paper_id": null,
+   "experiment_id": "exp_01M88TSP3SAMD5QFFQ1XJQ9368",
+   "theorem_id": null,
+   "agent_run_id": null,
+   "human_source": null,
+   "timestamp": "2026-10-11T04:00:00Z",
+   "verified": false,
+   "verification_status": "UNREVIEWED",
+   "human_verification": "UNREVIEWED",
+   "notes": null
+  },
+  {
+   "id": "ev_01M88TSP3SQRTXPMSC4MZ1GXES",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "type": "MATHEMATICAL_DERIVATION",
+   "title": "Contraction factor 1-2*lr",
+   "summary": "|1-2*lr| = 4 > 1",
+   "supports": [
+    "claim_01M88TSP3S5XVFWDNFWVADFEXF"
+   ],
+   "opposes": [],
+   "strength": "DECISIVE",
+   "source_uri": "https://github.com/RanchoTao/Sci-Map/blob/main/examples/repro/gd_quadratic.py",
+   "artifact_id": null,
+   "paper_id": null,
+   "experiment_id": null,
+   "theorem_id": null,
+   "agent_run_id": null,
+   "human_source": null,
+   "timestamp": "2026-10-11T04:00:00Z",
+   "verified": false,
+   "verification_status": "UNREVIEWED",
+   "human_verification": "UNREVIEWED",
+   "notes": null
+  }
+ ],
+ "papers": [],
+ "theorems": [],
+ "lemmas": [],
+ "experiments": [
+  {
+   "id": "exp_01M88TSP3SAMD5QFFQ1XJQ9368",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "title": "GD on x^2, lr 2.5",
+   "goal": "Test H1",
+   "hypothesis_ids": [
+    "hyp_01M88TSP3S87B1TBMSA9QV4E2Y"
+   ],
+   "config": {
+    "lr": 2.5
+   },
+   "dataset": null,
+   "code_ref": "examples/repro/gd_quadratic.py",
+   "status": "FAILED",
+   "started_at": "2026-10-11T04:00:00Z",
+   "finished_at": "2026-10-11T04:00:00Z",
+   "compute": {},
+   "metrics": {
+    "final_abs_x": 1.2676506002282294e+30
+   },
+   "results": {},
+   "artifacts": [
+    "art_01M88TSP3S3FX530E80R5VE35A"
+   ],
+   "result_evidence": [
+    "ev_01M88TSP3SG7WK350HBDPZKM2M"
+   ],
+   "interpretation": "Iterates diverge geometrically.",
+   "failure_reason": "hypothesis refuted",
+   "reproducible": true,
+   "seed": 0,
+   "environment": {},
+   "agent_run_id": null
+  }
+ ],
+ "agent_runs": [],
+ "decisions": [
+  {
+   "id": "dec_01M88TSP3S566R3TQC84W1FPAV",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "decision_type": "KILL",
+   "scope": "HYPOTHESIS",
+   "target_id": "hyp_01M88TSP3S87B1TBMSA9QV4E2Y",
+   "reasoning_summary": "Diverges; any lr > 1 does.",
+   "supporting_evidence": [
+    "ev_01M88TSP3SG7WK350HBDPZKM2M",
+    "ev_01M88TSP3SQRTXPMSC4MZ1GXES"
+   ],
+   "opposing_evidence": [],
+   "confidence": 0.99,
+   "decided_by": "agent:reviewer",
+   "agent_run_id": null,
+   "timestamp": "2026-10-11T04:00:00Z",
+   "supersedes": null,
+   "next_action": "task_01M88TSY4TQ5CRAN67F63M11Z3",
+   "decision_metrics": null,
+   "human_verification": "UNREVIEWED"
+  }
+ ],
+ "dependencies": [],
+ "artifacts": [
+  {
+   "id": "art_01M88TSP3S3FX530E80R5VE35A",
+   "type": "JSON",
+   "path": "runs/gd_lr2.5.json",
+   "title": "run output",
+   "description": "metrics",
+   "created_by": "agent:runner",
+   "agent_run_id": null,
+   "created_at": "2026-10-11T04:00:00Z",
+   "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "related_objects": [
+    "exp_01M88TSP3SAMD5QFFQ1XJQ9368"
+   ],
+   "is_primary": true,
+   "version": "1"
+  }
+ ],
+ "checkpoints": [],
+ "tasks": [
+  {
+   "id": "task_01M88TSY4TQ5CRAN67F63M11Z3",
+   "project_id": "proj_01M88TSP3R61MG10E8S0ZJQESW",
+   "title": "Test lr <= 1 on x^2",
+   "description": "Check convergence for lr in (0,1].",
+   "priority": "LOW",
+   "status": "TODO",
+   "target_id": "hyp_01M88TSP3SAYSZ8CRHEPHB5QRP",
+   "depends_on": [],
+   "estimated_cost": {},
+   "expected_information_gain": null,
+   "assigned_agent": null,
+   "agent_run_id": null,
+   "created_at": "2026-10-11T04:00:00Z",
+   "due": null,
+   "result": []
+  }
+ ]
+}
