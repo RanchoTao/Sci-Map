@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from build_index import enrich  # noqa: E402  (shared graph builder)
-from privacy import redact  # noqa: E402
+from privacy import redact, publication_problems  # noqa: E402
 
 SCHEMA = 'verdict-record-v1'
 VERDICTS = ['SUPPORTED', 'KILLED_IN_SCOPE', 'IMPLEMENTATION_FAILED', 'LITERATURE_COLLISION',
@@ -187,6 +187,8 @@ def check_record(r, path=None):
         e.append('addresses must be a list of problem-tree node ids')
     if 'metrics' in r and not isinstance(r['metrics'], dict):
         e.append('metrics must be an object')
+    # Publication gate: the public ledger is CC BY and mirrored; nothing private may enter it.
+    e += [f'privacy: {m}' for m in publication_problems({k: v for k, v in r.items() if k != 'schema'}, 'record')]
     return e
 
 

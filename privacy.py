@@ -14,3 +14,38 @@ def preview_allowed(member):
     parts = member.lower().replace('\\', '/').split('/')
     name = parts[-1]
     return '.git' not in parts and not any(x in name for x in ('.env', 'credential', 'password', 'secret', 'id_rsa', 'id_ed25519', '.bash_history', '.zsh_history', 'known_hosts'))
+
+
+# ---- publication gate: things that must never appear in a public ledger record
+EMAIL = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+LOCAL_PATH = re.compile(r'(?i)(?<![A-Za-z])[A-Z]:[\\/][^\s"]+|(?:/home|/Users|/root|/mnt/user-data|/sessions)/[^\s"/]+')
+CN_MOBILE = re.compile(r'(?<!\d)1[3-9]\d{9}(?!\d)')
+
+
+def publication_problems(value, where='record'):
+    """Return human-readable problems for strings that must not be published.
+
+    Credentials, e-mail addresses, phone numbers and absolute local paths
+    (which leak user names and private folder layouts) are rejected. Evidence
+    should point at https URLs or repository-relative paths instead.
+    """
+    out = []
+    if isinstance(value, dict):
+        for k, v in value.items():
+            out += publication_problems(v, f'{where}.{k}')
+    elif isinstance(value, list):
+        for i, v in enumerate(value):
+            out += publication_problems(v, f'{where}[{i}]')
+    elif isinstance(value, str):
+        checks = (
+            (TOKEN, 'looks like a credential'),
+            (URL_CREDENTIAL, 'URL contains a user name or password'),
+            (ASSIGNMENT, 'looks like a secret assignment'),
+            (EMAIL, 'contains an e-mail address'),
+            (CN_MOBILE, 'contains a phone number'),
+            (LOCAL_PATH, 'contains an absolute local path; use a repository-relative path or https URL'),
+        )
+        for rx, msg in checks:
+            if rx.search(value):
+                out.append(f'{where} {msg}')
+    return out

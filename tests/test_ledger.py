@@ -32,6 +32,20 @@ def variant(**changes):
 
 
 class LedgerValidation(unittest.TestCase):
+    def test_publication_gate_blocks_private_material(self):
+        bad = {
+            'outcome': 'see D:\\Work\\03-research\\run.log',
+            'setup': 'ran from /home/alice/runs',
+            'cause': 'key sk-abcdefghijklmnop1234 leaked',
+            'follow_up': 'ask me at someone@example.com',
+            'question': 'call 13812345678',
+        }
+        for field, text in bad.items():
+            errs = ledger.check_record(variant(**{field: text}))
+            self.assertTrue(any(x.startswith('privacy:') and field in x for x in errs), (field, errs))
+        ok = ledger.check_record(variant(outcome='see https://github.com/RanchoTao/Sci-Map and repro/x.py; ratio 3:2'))
+        self.assertEqual(ok, [])
+
     def test_example_is_valid(self):
         errors, warnings, records = ledger.validate([EXAMPLE])
         self.assertEqual(errors, [])
